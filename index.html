@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>XR Building Blocks</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background: #050510; font-family: ui-sans-serif, system-ui, sans-serif; }
+        canvas { display: block; }
+        
+        .glass { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(0, 242, 255, 0.2); }
+        .glow-text { text-shadow: 0 0 10px rgba(0, 242, 255, 0.5); }
+
+        .indicator { width: 8px; height: 8px; border-radius: 50%; background: #334155; }
+        .indicator.active { background: #00f2ff; box-shadow: 0 0 8px #00f2ff; }
+
+        #hand-cursor { position: absolute; width: 24px; height: 24px; border: 2px solid #00f2ff; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 100; display: none; box-shadow: 0 0 15px rgba(0,242,255,0.5); transition: background 0.2s, transform 0.1s, border-color 0.2s; }
+        #hand-cursor.pinching { background: rgba(255,0,212,0.4); border-color: #ff00d4; box-shadow: 0 0 20px rgba(255,0,212,0.6); transform: translate(-50%, -50%) scale(0.6); }
+        #hand-cursor.fisting { transform: translate(-50%, -50%) scale(1.2); background: rgba(0, 255, 170, 0.4); border-color: #00ffaa; box-shadow: 0 0 20px rgba(0, 255, 170, 0.6); }
+
+        #vr-button-container button { position: static !important; background: transparent !important; color: #00f2ff !important; font-family: inherit !important; font-weight: 900 !important; font-size: 14px !important; letter-spacing: -0.5px !important; padding: 0 32px !important; height: 64px !important; border-radius: 9999px !important; border: 1px solid rgba(0,242,255,0.5) !important; box-shadow: inset 0 0 20px rgba(0,242,255,0.2), 0 0 30px rgba(0,242,255,0.4) !important; transition: transform 0.2s, box-shadow 0.2s, background 0.2s !important; text-transform: uppercase !important; cursor: pointer; backdrop-filter: blur(4px); }
+        #vr-button-container button:hover { transform: scale(1.05) !important; box-shadow: inset 0 0 20px rgba(0,242,255,0.4), 0 0 40px rgba(0,242,255,0.6) !important; background: rgba(0,242,255,0.1) !important; }
+        #vr-button-container button:active { transform: scale(0.95) !important; }
+    </style>
+
+</head>
+<body>
+    <div id="ui-container" class="absolute top-0 left-0 w-full h-full p-8 flex flex-col justify-between pointer-events-none z-10 text-slate-200">
+        <!-- HEADER -->
+        <header class="flex justify-between items-start w-full">
+            <div>
+                <h1 class="text-3xl font-black tracking-tighter text-[#00f2ff] glow-text m-0">XR BUILDING BLOCKS</h1>
+                <p class="text-[10px] uppercase tracking-widest text-slate-500 mt-1">Spatial Sandbox // v1.0.0</p>
+            </div>
+            <div class="glass px-4 py-2 rounded-lg flex items-center gap-4">
+                <div class="flex flex-col gap-1">
+                    <span class="text-[9px] uppercase text-slate-400">Hand Tracking</span>
+                    <span class="text-xs font-mono flex items-center gap-2">
+                        <div id="cam-status" class="indicator"></div> WEBCAM
+                    </span>
+                </div>
+                <div class="w-px h-8 bg-slate-700"></div>
+                <div class="flex flex-col gap-1">
+                    <span class="text-[9px] uppercase text-slate-400">System</span>
+                    <span class="text-xs font-mono flex items-center gap-2">
+                        <div id="vr-status" class="indicator active"></div> 3D RUNNING
+                    </span>
+                </div>
+            </div>
+        </header>
+
+        <!-- FOOTER -->
+        <div class="flex justify-between items-end w-full pointer-events-auto">
+            <div class="flex flex-col gap-3">
+                <div class="glass p-4 rounded-xl w-80">
+                    <h3 class="text-[10px] uppercase font-bold text-[#00f2ff] mb-3 tracking-widest">Hand Tracking & Layout</h3>
+                    <div class="controls-help text-[11px] text-slate-300 space-y-2 mb-4">
+                        <p><strong>Desktop:</strong> Left-click drag to move, Scroll to scale, Right-click orbit.</p>
+                        <p><strong>Hands:</strong> Show palm to hover. Pinch index+thumb to grab & move. Make a fist and pull up/down to scale.</p>
+                    </div>
+                    <button id="enable-cam-btn" class="w-full py-2 bg-[#00f2ff]/10 border border-[#00f2ff] text-[#00f2ff] font-bold text-[10px] uppercase tracking-widest hover:bg-[#00f2ff]/30 transition-all rounded shadow-[0_0_10px_rgba(0,242,255,0.2)] cursor-pointer">Enable Hand Tracking</button>
+                </div>
+            </div>
+
+            <div class="flex gap-6 items-center">
+                <div class="text-right glass p-4 rounded-xl">
+                    <div class="text-[10px] uppercase text-[#00f2ff] font-bold mb-2 tracking-widest">Controls</div>
+                    <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-[11px] font-mono text-left">
+                        <span class="text-slate-300"><span class="bg-slate-800 px-1 rounded mr-1">B</span> SPAWN</span>
+                        <span class="text-slate-300"><span class="bg-slate-800 px-1 rounded mr-1">DEL</span> REMOVE</span>
+                        <span class="text-slate-300"><span class="bg-slate-800 px-1 rounded mr-1">C</span> COLOR</span>
+                        <span class="text-slate-300"><span class="bg-slate-800 px-1 rounded mr-1">G</span> GRID</span>
+                    </div>
+                </div>
+                <!-- VR Button Container -->
+                <div id="vr-button-container" class="relative"></div>
+            </div>
+        </div>
+    </div>
+    <div id="video-container" class="absolute top-24 right-8 w-40 h-32 glass overflow-hidden pointer-events-none z-10 rounded-xl" style="opacity: 0.5;">
+        <video id="webcam" autoplay playsinline class="w-full h-full object-cover scale-x-[-1]"></video>
+    </div>
+    <div id="hand-cursor"></div>
+
+    <script type="module">
+        import * as THREE from 'https://esm.sh/three@0.160.0';
+        import { OrbitControls } from 'https://esm.sh/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+        import { VRButton } from 'https://esm.sh/three@0.160.0/examples/jsm/webxr/VRButton.js';
+        import { XRControllerModelFactory } from 'https://esm.sh/three@0.160.0/examples/jsm/webxr/XRControllerModelFactory.js';
+        import { FilesetResolver, HandLandmarker } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/vision_bundle.js';
+
+        // --- AUDIO SYSTEM ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let lastSoundTime = 0;
+        function playSound(type, force = false) {
+            if (audioCtx.state === 'suspended') return;
+            const t = audioCtx.currentTime;
+            if (!force && t - lastSoundTime < 0.05) return;
+            lastSoundTime = t;
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            if (type === 'spawn') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, t);
+                osc.frequency.exponentialRampToValueAtTime(800, t + 0.1);
+                gain.gain.setValueAtTime(0.1, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+                osc.start(t); osc.stop(t + 0.3);
+            } else if (type === 'snap') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(300, t);
+                gain.gain.setValueAtTime(0.02, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+                osc.start(t); osc.stop(t + 0.05);
+            } else if (type === 'place') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(200, t);
+                gain.gain.setValueAtTime(0.05, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+                osc.start(t); osc.stop(t + 0.1);
+            } else if (type === 'stack') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, t);
+                osc.frequency.setValueAtTime(800, t + 0.05);
+                osc.frequency.setValueAtTime(1200, t + 0.1);
+                gain.gain.setValueAtTime(0.1, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+                osc.start(t); osc.stop(t + 0.3);
+            } else if (type === 'delete') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, t);
+                osc.frequency.exponentialRampToValueAtTime(50, t + 0.2);
+                gain.gain.setValueAtTime(0.1, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+                osc.start(t); osc.stop(t + 0.2);
+            }
+        }
+
+        // --- SCENE SETUP ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x050510);
+        scene.fog = new THREE.FogExp2(0x050510, 0.05);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(0, 5, 8);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.xr.enabled = true;
+        document.body.appendChild(renderer.domElement);
+
+        document.getElementById('vr-button-container').appendChild(VRButton.createButton(renderer));
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.maxPolarAngle = Math.PI / 2 + 0.1;
+
+        // --- LIGHTING ---
+        const ambientLight = new THREE.AmbientLight(0x223344, 1.5);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 2);
+        dirLight.position.set(5, 10, 5);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 2048;
+        dirLight.shadow.mapSize.height = 2048;
+        scene.add(dirLight);
+
+        // --- GRID ---
+        const gridSize = 20;
+        const gridDivisions = 20;
+        const gridHelper = new THREE.GridHelper(gridSize, gridDivisions, 0x00ffcc, 0x005544);
+        gridHelper.position.y = 0.01;
+        gridHelper.material.opacity = 0.3;
+        gridHelper.material.transparent = true;
+        scene.add(gridHelper);
+
+        const floorGeo = new THREE.PlaneGeometry(gridSize*2, gridSize*2);
+        const floorMat = new THREE.MeshStandardMaterial({ color: 0x050510, depthWrite: false });
+        const floor = new THREE.Mesh(floorGeo, floorMat);
+        floor.rotation.x = -Math.PI / 2;
+        floor.receiveShadow = true;
+        scene.add(floor);
+
+        const dragPlane = new THREE.Mesh(new THREE.PlaneGeometry(100, 100), new THREE.MeshBasicMaterial({ visible: false }));
+        dragPlane.rotation.x = -Math.PI / 2;
+        dragPlane.position.y = 0.5;
+        scene.add(dragPlane);
+
+        // --- SPARKLES ---
+        const sparkles = [];
+        const sparkleGeo = new THREE.BoxGeometry(0.08, 0.08, 0.08);
+        const sparkleMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+        function emitSparkles(pos, color) {
+            for(let i=0; i<15; i++) {
+                const mesh = new THREE.Mesh(sparkleGeo, sparkleMat.clone());
+                mesh.material.color.setHex(color);
+                mesh.position.copy(pos);
+                mesh.position.x += (Math.random() - 0.5) * 0.8;
+                mesh.position.y += (Math.random() - 0.5) * 0.8;
+                mesh.position.z += (Math.random() - 0.5) * 0.8;
+                scene.add(mesh);
+                sparkles.push({
+                    mesh,
+                    vel: new THREE.Vector3(Math.random() - 0.5, Math.random() * 0.5 + 0.5, Math.random() - 0.5).normalize().multiplyScalar(0.04 + Math.random()*0.04),
+                    life: 1.0
+                });
+            }
+        }
+
+        // --- BLOCKS ---
+        const blocks = [];
+        const neonColors = [0xff0055, 0x00ffcc, 0x0055ff, 0xffaa00, 0xaa00ff];
+        const boxGeo = new THREE.BoxGeometry(1, 1, 1);
+        const outlineGeo = new THREE.EdgesGeometry(boxGeo);
+
+        let selectedBlock = null;
+
+        function spawnBlock(x=0, y=0.5, z=0) {
+            const color = neonColors[Math.floor(Math.random() * neonColors.length)];
+            const mat = new THREE.MeshStandardMaterial({ 
+                color: color, roughness: 0.2, metalness: 0.8,
+                emissive: color, emissiveIntensity: 0.2
+            });
+            const block = new THREE.Mesh(boxGeo, mat);
+            block.position.set(x, y, z);
+            block.castShadow = true;
+            block.receiveShadow = true;
+            scene.add(block);
+            blocks.push(block);
+            playSound('spawn');
+            
+            const outlineVec = new THREE.LineSegments(outlineGeo, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 }));
+            block.add(outlineVec);
+            block.userData.outline = outlineVec;
+            return block;
+        }
+
+        spawnBlock(-2, 0.5, 0);
+        spawnBlock(0, 0.5, 0);
+        spawnBlock(2, 0.5, 0);
+
+        // --- DESKTOP & CAM INTERACTION ---
+        const raycaster = new THREE.Raycaster();
+        let pointer = new THREE.Vector2();
+        let isDragging = false;
+        let dragOffset = new THREE.Vector3();
+
+        function snap(v) { return Math.round(v); }
+
+        function onPointerDown(sx, sy) {
+            pointer.x = (sx / window.innerWidth) * 2 - 1;
+            pointer.y = -(sy / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(pointer, camera);
+            const intersects = raycaster.intersectObjects(blocks, false);
+            if (intersects.length > 0) {
+                controls.enabled = false;
+                selectedBlock = intersects[0].object;
+                isDragging = true;
+                dragPlane.position.y = selectedBlock.position.y;
+                dragPlane.updateMatrixWorld();
+                
+                raycaster.setFromCamera(pointer, camera);
+                const planeIntersect = raycaster.intersectObject(dragPlane);
+                if(planeIntersect.length > 0) {
+                    dragOffset.copy(selectedBlock.position).sub(planeIntersect[0].point);
+                    dragOffset.y = 0; 
+                }
+                blocks.forEach(b => { if (b.userData.outline) b.userData.outline.material.opacity = 0; });
+                if (selectedBlock && selectedBlock.userData.outline) {
+                    selectedBlock.userData.outline.material.opacity = 0.8;
+                }
+                playSound('snap');
+            }
+        }
+
+        function onPointerMove(sx, sy) {
+            pointer.x = (sx / window.innerWidth) * 2 - 1;
+            pointer.y = -(sy / window.innerHeight) * 2 + 1;
+            if (isDragging && selectedBlock) {
+                raycaster.setFromCamera(pointer, camera);
+                const planeIntersect = raycaster.intersectObject(dragPlane);
+                if (planeIntersect.length > 0) {
+                    const targetPos = planeIntersect[0].point.clone().add(dragOffset);
+                    const newX = snap(targetPos.x);
+                    const newZ = snap(targetPos.z);
+                    
+                    const downRay = new THREE.Raycaster(new THREE.Vector3(newX, 20, newZ), new THREE.Vector3(0, -1, 0));
+                    const obstacles = blocks.filter(b => b !== selectedBlock);
+                    const downHits = downRay.intersectObjects(obstacles, false);
+                    
+                    let targetY = 0.5 * selectedBlock.scale.y;
+                    if (downHits.length > 0) {
+                        const highest = downHits[0].object;
+                        targetY = highest.position.y + 0.5 * highest.scale.y + 0.5 * selectedBlock.scale.y;
+                    }
+                    
+                    const newPos = new THREE.Vector3(newX, targetY, newZ);
+                    if (newPos.distanceTo(selectedBlock.position) > 0.01) {
+                        selectedBlock.position.copy(newPos);
+                        playSound('snap');
+                    }
+                }
+            } else {
+                raycaster.setFromCamera(pointer, camera);
+                const intersects = raycaster.intersectObjects(blocks, false);
+                blocks.forEach(b => { if(b !== selectedBlock && b.userData.outline) b.userData.outline.material.opacity = 0; });
+                if(intersects.length > 0 && intersects[0].object.userData.outline) intersects[0].object.userData.outline.material.opacity = 0.3;
+            }
+        }
+
+        function onPointerUp() {
+            if (isDragging && selectedBlock) {
+                let joined = false;
+                for (const b of blocks) {
+                    if (b !== selectedBlock) {
+                        const dx = Math.abs(selectedBlock.position.x - b.position.x);
+                        const dy = Math.abs(selectedBlock.position.y - b.position.y);
+                        const dz = Math.abs(selectedBlock.position.z - b.position.z);
+                        
+                        const hx = (selectedBlock.scale.x + b.scale.x) / 2;
+                        const hy = (selectedBlock.scale.y + b.scale.y) / 2;
+                        const hz = (selectedBlock.scale.z + b.scale.z) / 2;
+
+                        if (dx < hx + 0.1 && dy < hy + 0.1 && dz < hz + 0.1) {
+                            joined = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (joined) {
+                    playSound('stack', true);
+                    emitSparkles(selectedBlock.position, selectedBlock.material.color.getHex());
+                } else {
+                    playSound('place', true);
+                }
+            }
+            isDragging = false;
+            controls.enabled = true;
+        }
+
+        window.addEventListener('pointerdown', (e) => {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if (e.button === 0 && e.target.tagName === 'CANVAS') onPointerDown(e.clientX, e.clientY);
+        });
+        window.addEventListener('pointermove', (e) => { if (e.target.tagName === 'CANVAS') onPointerMove(e.clientX, e.clientY); });
+        window.addEventListener('pointerup', (e) => { if (e.button === 0) onPointerUp(); });
+        
+        window.addEventListener('wheel', (e) => {
+            if(selectedBlock && isDragging) {
+                const oldScale = selectedBlock.scale.x;
+                const delta = -Math.sign(e.deltaY) * 0.2;
+                selectedBlock.scale.addScalar(delta);
+                selectedBlock.scale.clampScalar(0.5, 3.0);
+                if (Math.abs(oldScale - selectedBlock.scale.x) > 0.05) playSound('snap');
+            }
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const key = e.key.toLowerCase();
+            if(key === 'b') spawnBlock(Math.random()*4-2, 0.5, Math.random()*4-2);
+            else if ((key === 'delete' || key === 'backspace') && selectedBlock) {
+                scene.remove(selectedBlock);
+                blocks.splice(blocks.indexOf(selectedBlock), 1);
+                playSound('delete');
+                selectedBlock = null;
+            } else if (key === 'c' && selectedBlock) {
+                const color = neonColors[Math.floor(Math.random() * neonColors.length)];
+                selectedBlock.material.color.setHex(color);
+                selectedBlock.material.emissive.setHex(color);
+            } else if (key === 'g') {
+                gridHelper.visible = !gridHelper.visible;
+            } else if (key === 'v') {
+                const btn = document.getElementById('VRButton');
+                if(btn) btn.click();
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // --- VR CONTROLLERS ---
+        const vrControllers = [];
+        const ctrlFactory = new XRControllerModelFactory();
+
+        for(let i=0; i<2; i++) {
+            const c = renderer.xr.getController(i);
+            scene.add(c);
+            c.addEventListener('selectstart', e => onVRGrab(e.target));
+            c.addEventListener('selectend', e => onVRRelease(e.target));
+            
+            const g = renderer.xr.getControllerGrip(i);
+            g.add(ctrlFactory.createControllerModel(g));
+            scene.add(g);
+            
+            const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,-5)]), new THREE.LineBasicMaterial({color: 0x00ffcc}));
+            c.add(line);
+            
+            vrControllers.push({ c, g, ray: new THREE.Raycaster(), grabObj: null });
+        }
+
+        function onVRGrab(ctrl) {
+            const data = vrControllers.find(x => x.c === ctrl);
+            const mat = new THREE.Matrix4().extractRotation(ctrl.matrixWorld);
+            data.ray.ray.origin.setFromMatrixPosition(ctrl.matrixWorld);
+            data.ray.ray.direction.set(0, 0, -1).applyMatrix4(mat);
+            const hits = data.ray.intersectObjects(blocks, false);
+            if(hits.length > 0) {
+                data.grabObj = hits[0].object;
+                ctrl.attach(data.grabObj);
+                playSound('snap');
+            }
+        }
+
+        function onVRRelease(ctrl) {
+            const data = vrControllers.find(x => x.c === ctrl);
+            if(!data || !data.grabObj) return;
+            const obj = data.grabObj;
+            scene.attach(obj);
+            obj.position.set(snap(obj.position.x), Math.max(0.5 * obj.scale.y, snap(obj.position.y - 0.5 * obj.scale.y) + 0.5 * obj.scale.y), snap(obj.position.z));
+            const e = new THREE.Euler().setFromQuaternion(obj.quaternion);
+            e.x = Math.round(e.x / (Math.PI/2)) * (Math.PI/2);
+            e.y = Math.round(e.y / (Math.PI/2)) * (Math.PI/2);
+            e.z = Math.round(e.z / (Math.PI/2)) * (Math.PI/2);
+            obj.quaternion.setFromEuler(e);
+            playSound('place');
+            data.grabObj = null;
+        }
+
+        // --- WEBCAM HAND TRACKING ---
+        let handLandmarker;
+        let webcamActive = false;
+        const video = document.getElementById('webcam');
+        const cursor = document.getElementById('hand-cursor');
+
+        async function initHands() {
+            const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm");
+            handLandmarker = await HandLandmarker.createFromOptions(vision, {
+                baseOptions: { modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task", delegate: "GPU" },
+                runningMode: "VIDEO", numHands: 2
+            });
+        }
+        initHands();
+
+        document.getElementById('enable-cam-btn').addEventListener('click', async (e) => {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if(!handLandmarker) return;
+            if(!webcamActive) {
+                try {
+                    const str = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+                    video.srcObject = str;
+                    video.addEventListener("loadeddata", () => {
+                        webcamActive = true;
+                        document.getElementById('cam-status').classList.add('active');
+                        e.target.innerText = "Disable Hand Tracking";
+                        cursor.style.display = 'block';
+                    });
+                } catch (err) { 
+                    console.error("Camera access denied.", err);
+                    e.target.innerText = "Camera Access Denied";
+                    e.target.style.borderColor = "#ff0055";
+                    e.target.style.color = "#ff0055";
+                    setTimeout(() => {
+                        e.target.innerText = "Enable Hand Tracking";
+                        e.target.style.borderColor = "";
+                        e.target.style.color = "";
+                    }, 3000);
+                }
+            } else {
+                video.srcObject.getTracks().forEach(t => t.stop());
+                video.srcObject = null;
+                webcamActive = false;
+                document.getElementById('cam-status').classList.remove('active');
+                e.target.innerText = "Enable Hand Tracking";
+                cursor.style.display = 'none';
+                if(isPinching) { isPinching = false; cursor.classList.remove('pinching'); onPointerUp(); }
+                if(isFisting) { isFisting = false; cursor.classList.remove('fisting'); }
+            }
+        });
+
+        let curX = window.innerWidth/2, curY = window.innerHeight/2;
+        let isPinching = false;
+        let isFisting = false;
+        let startFistY = 0;
+        let startObjScale = 1;
+        let lastVTime = -1;
+
+        function processHands() {
+            if (!webcamActive || !handLandmarker || video.videoWidth === 0) return;
+            if (video.currentTime !== lastVTime) {
+                lastVTime = video.currentTime;
+                const res = handLandmarker.detectForVideo(video, performance.now());
+                
+                let targetX = curX, targetY = curY;
+                
+                if (res.landmarks && res.landmarks.length > 0) {
+                    let h0 = res.landmarks[0];
+                    let handSize = Math.hypot(h0[0].x - h0[9].x, h0[0].y - h0[9].y);
+                    let pinchDist = Math.hypot(h0[4].x - h0[8].x, h0[4].y - h0[8].y);
+                    let relDist = handSize > 0 ? pinchDist / handSize : 0;
+                    
+                    let closedFingers = 0;
+                    [8, 12, 16, 20].forEach((tip, idx) => {
+                        let mcpJoint = [5, 9, 13, 17][idx];
+                        let dTip = Math.hypot(h0[tip].x - h0[0].x, h0[tip].y - h0[0].y);
+                        let dMcp = Math.hypot(h0[mcpJoint].x - h0[0].x, h0[mcpJoint].y - h0[0].y);
+                        if (dTip < dMcp * 1.25) closedFingers++;
+                    });
+                    
+                    let isHandFist = closedFingers >= 3;
+                    let isHandPinching = !isHandFist && (relDist < 0.20);
+                    
+                    targetX = (1 - h0[9].x) * window.innerWidth;
+                    targetY = h0[9].y * window.innerHeight;
+                    
+                    if (isHandPinching && !isPinching && !isFisting) {
+                        isPinching = true;
+                        curX = targetX; curY = targetY; 
+                        cursor.classList.add('pinching');
+                        if (audioCtx.state === 'suspended') audioCtx.resume();
+                        onPointerDown(curX, curY);
+                    } else if (!isHandPinching && isPinching) {
+                        isPinching = false;
+                        cursor.classList.remove('pinching');
+                        onPointerUp();
+                    }
+                    
+                    if (isHandFist && !isFisting && !isPinching) {
+                        pointer.x = (targetX / window.innerWidth) * 2 - 1;
+                        pointer.y = -(targetY / window.innerHeight) * 2 + 1;
+                        raycaster.setFromCamera(pointer, camera);
+                        const intersects = raycaster.intersectObjects(blocks, false);
+                        if (intersects.length > 0) {
+                            isFisting = true;
+                            selectedBlock = intersects[0].object;
+                            startFistY = targetY;
+                            startObjScale = selectedBlock.scale.x;
+                            cursor.classList.add('fisting');
+                        }
+                    } else if (isHandFist && isFisting && selectedBlock) {
+                        let diffY = startFistY - targetY;
+                        let newScale = Math.max(0.5, Math.min(3.0, startObjScale + (diffY / window.innerHeight) * 3.0));
+                        if (Math.abs(selectedBlock.scale.x - newScale) > 0.05) {
+                            selectedBlock.scale.setScalar(newScale);
+                            playSound('snap');
+                        }
+                    } else if (!isHandFist && isFisting) {
+                        isFisting = false;
+                        cursor.classList.remove('fisting');
+                    }
+                } else {
+                    if (isPinching) {
+                        isPinching = false;
+                        cursor.classList.remove('pinching');
+                        onPointerUp();
+                    }
+                    if (isFisting) {
+                        isFisting = false;
+                        cursor.classList.remove('fisting');
+                    }
+                }
+                
+                curX += (targetX - curX) * 0.3;
+                curY += (targetY - curY) * 0.3;
+                cursor.style.left = curX + 'px';
+                cursor.style.top = curY + 'px';
+
+                if (!isFisting) {
+                    onPointerMove(curX, curY);
+                }
+            }
+        }
+
+        // --- LOOP ---
+        renderer.setAnimationLoop(() => {
+            controls.update();
+            processHands();
+            
+            for (let i = sparkles.length - 1; i >= 0; i--) {
+                const s = sparkles[i];
+                s.mesh.position.add(s.vel);
+                s.life -= 0.02;
+                s.mesh.scale.setScalar(s.life);
+                if (s.life <= 0) {
+                    scene.remove(s.mesh);
+                    sparkles.splice(i, 1);
+                }
+            }
+            
+            const t = performance.now() * 0.001;
+            blocks.forEach((b, i) => {
+                if(b !== selectedBlock && !vrControllers.some(c => c.grabObj === b)) {
+                    b.userData.outline.material.opacity = 0.1 + 0.1 * Math.sin(t*2 + i);
+                }
+            });
+            renderer.render(scene, camera);
+        });
+    </script>
+</body>
+</html>

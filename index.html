@@ -66,11 +66,11 @@
             <div class="flex gap-6 items-center">
                 <div class="text-right glass p-4 rounded-xl">
                     <div class="text-[10px] uppercase text-[#00f2ff] font-bold mb-2 tracking-widest">Controls</div>
-                    <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-[11px] font-mono text-left">
-                        <span class="text-slate-300"><span class="bg-slate-800 px-1 rounded mr-1">B</span> SPAWN</span>
-                        <span class="text-slate-300"><span class="bg-slate-800 px-1 rounded mr-1">DEL</span> REMOVE</span>
-                        <span class="text-slate-300"><span class="bg-slate-800 px-1 rounded mr-1">C</span> COLOR</span>
-                        <span class="text-slate-300"><span class="bg-slate-800 px-1 rounded mr-1">G</span> GRID</span>
+                    <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-[11px] font-mono text-left pointer-events-auto">
+                        <button id="btn-spawn" class="text-slate-300 hover:text-white cursor-pointer select-none text-left flex items-center"><span class="bg-slate-800 px-1 rounded mr-1">B</span> SPAWN</button>
+                        <button id="btn-delete" class="text-slate-300 hover:text-white cursor-pointer select-none text-left flex items-center"><span class="bg-slate-800 px-1 rounded mr-1">DEL</span> REMOVE</button>
+                        <button id="btn-color" class="text-slate-300 hover:text-white cursor-pointer select-none text-left flex items-center"><span class="bg-slate-800 px-1 rounded mr-1">C</span> COLOR</button>
+                        <button id="btn-grid" class="text-slate-300 hover:text-white cursor-pointer select-none text-left flex items-center"><span class="bg-slate-800 px-1 rounded mr-1">G</span> GRID</button>
                     </div>
                 </div>
                 <!-- VR Button Container -->
@@ -87,7 +87,7 @@
         import * as THREE from 'https://esm.sh/three@0.160.0';
         import { OrbitControls } from 'https://esm.sh/three@0.160.0/examples/jsm/controls/OrbitControls.js';
         import { VRButton } from 'https://esm.sh/three@0.160.0/examples/jsm/webxr/VRButton.js';
-        import { XRControllerModelFactory } from 'https://esm.sh/three@0.160.0/examples/jsm/webxr/XRControllerModelFactory.js';
+        import { XRHandModelFactory } from 'https://esm.sh/three@0.160.0/examples/jsm/webxr/XRHandModelFactory.js';
         import { FilesetResolver, HandLandmarker } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/vision_bundle.js';
 
         // --- AUDIO SYSTEM ---
@@ -147,7 +147,7 @@
         scene.fog = new THREE.FogExp2(0x050510, 0.05);
 
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
-        camera.position.set(0, 5, 8);
+        camera.position.set(0, 1, 1.5);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -157,7 +157,55 @@
         renderer.xr.enabled = true;
         document.body.appendChild(renderer.domElement);
 
-        document.getElementById('vr-button-container').appendChild(VRButton.createButton(renderer));
+        document.getElementById('vr-button-container').appendChild(VRButton.createButton(renderer, { sessionInit: { optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking'] } }));
+        
+        // --- 3D UI FOR VR ---
+        const vrUIGroup = new THREE.Group();
+        vrUIGroup.position.set(0, 1.0, -0.6);
+        vrUIGroup.rotation.x = -0.2;
+        scene.add(vrUIGroup);
+
+        const uiButtons = [];
+        function create3DButton(text, x, y, actionId) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#1e293b'; 
+            ctx.fillRect(0,0,256,64);
+            ctx.strokeStyle = '#00f2ff';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(0,0,256,64);
+            ctx.fillStyle = '#00f2ff';
+            ctx.font = 'bold 32px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, 128, 32);
+            
+            const tex = new THREE.CanvasTexture(canvas);
+            const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.9, side: THREE.DoubleSide });
+            const geo = new THREE.PlaneGeometry(0.2, 0.05);
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(x, y, 0);
+            mesh.userData.action = actionId;
+            vrUIGroup.add(mesh);
+            uiButtons.push(mesh);
+        }
+        create3DButton('SPAWN', -0.12, 0.08, 'spawn');
+        create3DButton('REMOVE', 0.12, 0.08, 'delete');
+        create3DButton('COLOR', -0.12, 0.01, 'color');
+        create3DButton('GRID', 0.12, 0.01, 'grid');
+        create3DButton('EXIT VR', 0, -0.06, 'exit_vr');
+
+        vrUIGroup.visible = false;
+
+        renderer.xr.addEventListener('sessionstart', () => {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            vrUIGroup.visible = true;
+        });
+        renderer.xr.addEventListener('sessionend', () => {
+            vrUIGroup.visible = false;
+        });
 
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
@@ -175,11 +223,15 @@
         dirLight.shadow.mapSize.height = 2048;
         scene.add(dirLight);
 
+        // --- BUILT-IN SIZE ---
+        const BOX_SIZE = 0.2;
+        const HALF = BOX_SIZE / 2;
+
         // --- GRID ---
-        const gridSize = 20;
+        const gridSize = 2;
         const gridDivisions = 20;
         const gridHelper = new THREE.GridHelper(gridSize, gridDivisions, 0x00ffcc, 0x005544);
-        gridHelper.position.y = 0.01;
+        gridHelper.position.y = 0.001;
         gridHelper.material.opacity = 0.3;
         gridHelper.material.transparent = true;
         scene.add(gridHelper);
@@ -198,7 +250,7 @@
 
         // --- SPARKLES ---
         const sparkles = [];
-        const sparkleGeo = new THREE.BoxGeometry(0.08, 0.08, 0.08);
+        const sparkleGeo = new THREE.BoxGeometry(0.016, 0.016, 0.016);
         const sparkleMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
 
         function emitSparkles(pos, color) {
@@ -206,13 +258,13 @@
                 const mesh = new THREE.Mesh(sparkleGeo, sparkleMat.clone());
                 mesh.material.color.setHex(color);
                 mesh.position.copy(pos);
-                mesh.position.x += (Math.random() - 0.5) * 0.8;
-                mesh.position.y += (Math.random() - 0.5) * 0.8;
-                mesh.position.z += (Math.random() - 0.5) * 0.8;
+                mesh.position.x += (Math.random() - 0.5) * 0.16;
+                mesh.position.y += (Math.random() - 0.5) * 0.16;
+                mesh.position.z += (Math.random() - 0.5) * 0.16;
                 scene.add(mesh);
                 sparkles.push({
                     mesh,
-                    vel: new THREE.Vector3(Math.random() - 0.5, Math.random() * 0.5 + 0.5, Math.random() - 0.5).normalize().multiplyScalar(0.04 + Math.random()*0.04),
+                    vel: new THREE.Vector3(Math.random() - 0.5, Math.random() * 0.5 + 0.5, Math.random() - 0.5).normalize().multiplyScalar(0.008 + Math.random()*0.008),
                     life: 1.0
                 });
             }
@@ -221,12 +273,12 @@
         // --- BLOCKS ---
         const blocks = [];
         const neonColors = [0xff0055, 0x00ffcc, 0x0055ff, 0xffaa00, 0xaa00ff];
-        const boxGeo = new THREE.BoxGeometry(1, 1, 1);
+        const boxGeo = new THREE.BoxGeometry(BOX_SIZE, BOX_SIZE, BOX_SIZE);
         const outlineGeo = new THREE.EdgesGeometry(boxGeo);
 
         let selectedBlock = null;
 
-        function spawnBlock(x=0, y=0.5, z=0) {
+        function spawnBlock(x=0, y=HALF, z=0) {
             const color = neonColors[Math.floor(Math.random() * neonColors.length)];
             const mat = new THREE.MeshStandardMaterial({ 
                 color: color, roughness: 0.2, metalness: 0.8,
@@ -246,9 +298,9 @@
             return block;
         }
 
-        spawnBlock(-2, 0.5, 0);
-        spawnBlock(0, 0.5, 0);
-        spawnBlock(2, 0.5, 0);
+        spawnBlock(-0.4, HALF, 0);
+        spawnBlock(0, HALF, 0);
+        spawnBlock(0.4, HALF, 0);
 
         // --- DESKTOP & CAM INTERACTION ---
         const raycaster = new THREE.Raycaster();
@@ -256,7 +308,7 @@
         let isDragging = false;
         let dragOffset = new THREE.Vector3();
 
-        function snap(v) { return Math.round(v); }
+        function snap(v) { return Math.round(v / BOX_SIZE) * BOX_SIZE; }
 
         function onPointerDown(sx, sy) {
             pointer.x = (sx / window.innerWidth) * 2 - 1;
@@ -299,14 +351,14 @@
                     const obstacles = blocks.filter(b => b !== selectedBlock);
                     const downHits = downRay.intersectObjects(obstacles, false);
                     
-                    let targetY = 0.5 * selectedBlock.scale.y;
+                    let targetY = HALF * selectedBlock.scale.y;
                     if (downHits.length > 0) {
                         const highest = downHits[0].object;
-                        targetY = highest.position.y + 0.5 * highest.scale.y + 0.5 * selectedBlock.scale.y;
+                        targetY = highest.position.y + HALF * highest.scale.y + HALF * selectedBlock.scale.y;
                     }
                     
                     const newPos = new THREE.Vector3(newX, targetY, newZ);
-                    if (newPos.distanceTo(selectedBlock.position) > 0.01) {
+                    if (newPos.distanceTo(selectedBlock.position) > 0.001) {
                         selectedBlock.position.copy(newPos);
                         playSound('snap');
                     }
@@ -328,11 +380,11 @@
                         const dy = Math.abs(selectedBlock.position.y - b.position.y);
                         const dz = Math.abs(selectedBlock.position.z - b.position.z);
                         
-                        const hx = (selectedBlock.scale.x + b.scale.x) / 2;
-                        const hy = (selectedBlock.scale.y + b.scale.y) / 2;
-                        const hz = (selectedBlock.scale.z + b.scale.z) / 2;
+                        const hx = (selectedBlock.scale.x + b.scale.x) * HALF;
+                        const hy = (selectedBlock.scale.y + b.scale.y) * HALF;
+                        const hz = (selectedBlock.scale.z + b.scale.z) * HALF;
 
-                        if (dx < hx + 0.1 && dy < hy + 0.1 && dz < hz + 0.1) {
+                        if (dx < hx + 0.02 && dy < hy + 0.02 && dz < hz + 0.02) {
                             joined = true;
                             break;
                         }
@@ -367,22 +419,44 @@
             }
         });
 
-        window.addEventListener('keydown', (e) => {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const key = e.key.toLowerCase();
-            if(key === 'b') spawnBlock(Math.random()*4-2, 0.5, Math.random()*4-2);
-            else if ((key === 'delete' || key === 'backspace') && selectedBlock) {
+        function handleSpawn() {
+            spawnBlock(snap(Math.random()*2-1), HALF, snap(Math.random()*2-1));
+        }
+
+        function handleDelete() {
+            if (selectedBlock) {
                 scene.remove(selectedBlock);
                 blocks.splice(blocks.indexOf(selectedBlock), 1);
                 playSound('delete');
                 selectedBlock = null;
-            } else if (key === 'c' && selectedBlock) {
+            }
+        }
+
+        function handleColor() {
+            if (selectedBlock) {
                 const color = neonColors[Math.floor(Math.random() * neonColors.length)];
                 selectedBlock.material.color.setHex(color);
                 selectedBlock.material.emissive.setHex(color);
-            } else if (key === 'g') {
-                gridHelper.visible = !gridHelper.visible;
-            } else if (key === 'v') {
+            }
+        }
+
+        function handleGrid() {
+            gridHelper.visible = !gridHelper.visible;
+        }
+
+        document.getElementById('btn-spawn').addEventListener('click', () => { if (audioCtx.state === 'suspended') audioCtx.resume(); handleSpawn(); });
+        document.getElementById('btn-delete').addEventListener('click', () => { if (audioCtx.state === 'suspended') audioCtx.resume(); handleDelete(); });
+        document.getElementById('btn-color').addEventListener('click', () => { if (audioCtx.state === 'suspended') audioCtx.resume(); handleColor(); });
+        document.getElementById('btn-grid').addEventListener('click', () => { if (audioCtx.state === 'suspended') audioCtx.resume(); handleGrid(); });
+
+        window.addEventListener('keydown', (e) => {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const key = e.key.toLowerCase();
+            if(key === 'b') handleSpawn();
+            else if ((key === 'delete' || key === 'backspace')) handleDelete();
+            else if (key === 'c') handleColor();
+            else if (key === 'g') handleGrid();
+            else if (key === 'v') {
                 const btn = document.getElementById('VRButton');
                 if(btn) btn.click();
             }
@@ -396,22 +470,27 @@
 
         // --- VR CONTROLLERS ---
         const vrControllers = [];
-        const ctrlFactory = new XRControllerModelFactory();
+        const handModelFactory = new XRHandModelFactory();
 
         for(let i=0; i<2; i++) {
             const c = renderer.xr.getController(i);
             scene.add(c);
             c.addEventListener('selectstart', e => onVRGrab(e.target));
             c.addEventListener('selectend', e => onVRRelease(e.target));
+            c.addEventListener('squeezestart', e => onVRSqueezeStart(e.target));
+            c.addEventListener('squeezeend', e => onVRSqueezeEnd(e.target));
             
             const g = renderer.xr.getControllerGrip(i);
-            g.add(ctrlFactory.createControllerModel(g));
             scene.add(g);
+            
+            const hand = renderer.xr.getHand(i);
+            hand.add(handModelFactory.createHandModel(hand, 'mesh'));
+            scene.add(hand);
             
             const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,-5)]), new THREE.LineBasicMaterial({color: 0x00ffcc}));
             c.add(line);
             
-            vrControllers.push({ c, g, ray: new THREE.Raycaster(), grabObj: null });
+            vrControllers.push({ c, g, hand, ray: new THREE.Raycaster(), grabObj: null, squeezeObj: null, startScale: 1, startY: 0 });
         }
 
         function onVRGrab(ctrl) {
@@ -419,12 +498,52 @@
             const mat = new THREE.Matrix4().extractRotation(ctrl.matrixWorld);
             data.ray.ray.origin.setFromMatrixPosition(ctrl.matrixWorld);
             data.ray.ray.direction.set(0, 0, -1).applyMatrix4(mat);
+            
+            if (vrUIGroup.visible) {
+                const uiHits = data.ray.intersectObjects(uiButtons, false);
+                if (uiHits.length > 0) {
+                    const action = uiHits[0].object.userData.action;
+                    if (action === 'spawn') handleSpawn();
+                    if (action === 'delete') handleDelete();
+                    if (action === 'color') handleColor();
+                    if (action === 'grid') handleGrid();
+                    if (action === 'exit_vr') renderer.xr.getSession().end();
+                    playSound('snap');
+                    return;
+                }
+            }
+
             const hits = data.ray.intersectObjects(blocks, false);
             if(hits.length > 0) {
                 data.grabObj = hits[0].object;
+                
+                blocks.forEach(b => { if (b.userData.outline) b.userData.outline.material.opacity = 0; });
+                selectedBlock = data.grabObj;
+                if (selectedBlock.userData.outline) selectedBlock.userData.outline.material.opacity = 0.8;
+
                 ctrl.attach(data.grabObj);
                 playSound('snap');
             }
+        }
+
+        function onVRSqueezeStart(ctrl) {
+            const data = vrControllers.find(x => x.c === ctrl);
+            const mat = new THREE.Matrix4().extractRotation(ctrl.matrixWorld);
+            data.ray.ray.origin.setFromMatrixPosition(ctrl.matrixWorld);
+            data.ray.ray.direction.set(0, 0, -1).applyMatrix4(mat);
+            const hits = data.ray.intersectObjects(blocks, false);
+            if(hits.length > 0) {
+                data.squeezeObj = hits[0].object;
+                const pos = new THREE.Vector3();
+                pos.setFromMatrixPosition(ctrl.matrixWorld);
+                data.startY = pos.y;
+                data.startScale = data.squeezeObj.scale.x;
+            }
+        }
+
+        function onVRSqueezeEnd(ctrl) {
+            const data = vrControllers.find(x => x.c === ctrl);
+            if (data) data.squeezeObj = null;
         }
 
         function onVRRelease(ctrl) {
@@ -432,13 +551,37 @@
             if(!data || !data.grabObj) return;
             const obj = data.grabObj;
             scene.attach(obj);
-            obj.position.set(snap(obj.position.x), Math.max(0.5 * obj.scale.y, snap(obj.position.y - 0.5 * obj.scale.y) + 0.5 * obj.scale.y), snap(obj.position.z));
+            
+            const newX = snap(obj.position.x);
+            const newZ = snap(obj.position.z);
+            
+            const downRay = new THREE.Raycaster(new THREE.Vector3(newX, 20, newZ), new THREE.Vector3(0, -1, 0));
+            const obstacles = blocks.filter(b => b !== obj);
+            const downHits = downRay.intersectObjects(obstacles, false);
+            
+            let targetY = HALF * obj.scale.y;
+            let joined = false;
+            
+            if (downHits.length > 0) {
+                const highest = downHits[0].object;
+                targetY = highest.position.y + HALF * highest.scale.y + HALF * obj.scale.y;
+                joined = true;
+            }
+            
+            obj.position.set(newX, targetY, newZ);
+            
             const e = new THREE.Euler().setFromQuaternion(obj.quaternion);
             e.x = Math.round(e.x / (Math.PI/2)) * (Math.PI/2);
             e.y = Math.round(e.y / (Math.PI/2)) * (Math.PI/2);
             e.z = Math.round(e.z / (Math.PI/2)) * (Math.PI/2);
             obj.quaternion.setFromEuler(e);
-            playSound('place');
+            
+            if (joined) {
+                playSound('stack', true);
+                emitSparkles(obj.position, obj.material.color.getHex());
+            } else {
+                playSound('place', true);
+            }
             data.grabObj = null;
         }
 
@@ -601,6 +744,19 @@
                     sparkles.splice(i, 1);
                 }
             }
+            
+            vrControllers.forEach(data => {
+                if (data.squeezeObj) {
+                    const pos = new THREE.Vector3();
+                    pos.setFromMatrixPosition(data.c.matrixWorld);
+                    let diffY = pos.y - data.startY;
+                    let newScale = Math.max(0.5, Math.min(3.0, data.startScale + diffY * 5.0));
+                    if (Math.abs(data.squeezeObj.scale.x - newScale) > 0.05) {
+                        data.squeezeObj.scale.setScalar(newScale);
+                        playSound('snap');
+                    }
+                }
+            });
             
             const t = performance.now() * 0.001;
             blocks.forEach((b, i) => {

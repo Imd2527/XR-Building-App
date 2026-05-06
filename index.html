@@ -734,6 +734,42 @@
             controls.update();
             processHands();
             
+            const sortedBlocks = [...blocks].sort((a, b) => a.position.y - b.position.y);
+            for (const b of sortedBlocks) {
+                if (b === selectedBlock || vrControllers.some(c => c.grabObj === b)) continue;
+                
+                let targetY = HALF * b.scale.y;
+                let maxObstacleY = -Infinity;
+                
+                for (const ob of sortedBlocks) {
+                    if (ob === b || ob.position.y > b.position.y - 0.001) continue;
+                    
+                    const dx = Math.abs(b.position.x - ob.position.x);
+                    const dz = Math.abs(b.position.z - ob.position.z);
+                    const hx = (b.scale.x + ob.scale.x) * HALF;
+                    const hz = (b.scale.z + ob.scale.z) * HALF;
+                    
+                    if (dx < hx - 0.01 && dz < hz - 0.01) {
+                        const surfaceY = ob.position.y + HALF * ob.scale.y;
+                        if (surfaceY > maxObstacleY) {
+                            maxObstacleY = surfaceY;
+                        }
+                    }
+                }
+                
+                if (maxObstacleY > -Infinity) {
+                    targetY = maxObstacleY + HALF * b.scale.y;
+                }
+                
+                if (b.position.y > targetY + 0.001) {
+                    b.position.y -= 0.05;
+                    if (b.position.y <= targetY) {
+                        b.position.y = targetY;
+                        playSound('place');
+                    }
+                }
+            }
+
             for (let i = sparkles.length - 1; i >= 0; i--) {
                 const s = sparkles[i];
                 s.mesh.position.add(s.vel);

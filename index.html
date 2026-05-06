@@ -22,6 +22,90 @@
         #vr-button-container button { position: static !important; background: transparent !important; color: #00f2ff !important; font-family: inherit !important; font-weight: 900 !important; font-size: 14px !important; letter-spacing: -0.5px !important; padding: 0 32px !important; height: 64px !important; border-radius: 9999px !important; border: 1px solid rgba(0,242,255,0.5) !important; box-shadow: inset 0 0 20px rgba(0,242,255,0.2), 0 0 30px rgba(0,242,255,0.4) !important; transition: transform 0.2s, box-shadow 0.2s, background 0.2s !important; text-transform: uppercase !important; cursor: pointer; backdrop-filter: blur(4px); }
         #vr-button-container button:hover { transform: scale(1.05) !important; box-shadow: inset 0 0 20px rgba(0,242,255,0.4), 0 0 40px rgba(0,242,255,0.6) !important; background: rgba(0,242,255,0.1) !important; }
         #vr-button-container button:active { transform: scale(0.95) !important; }
+
+        @keyframes animPinch {
+            0%, 100% { transform: scale(1); border-width: 2px; }
+            20%, 80% { transform: scale(0.6); border-width: 4px; }
+            50% { transform: scale(0.6) translate(10px, -10px); border-width: 4px; }
+        }
+        .anim-pinch { animation: animPinch 3s infinite ease-in-out; }
+
+        @keyframes animMouseDrag {
+            0% { transform: translate(0, 0); }
+            20% { transform: translate(15px, -15px); }
+            30% { transform: translate(15px, -15px) scale(0.8); }
+            70% { transform: translate(45px, -35px) scale(0.8); }
+            80% { transform: translate(45px, -35px) scale(1); }
+            100% { transform: translate(0, 0); }
+        }
+        .anim-mouse-drag { animation: animMouseDrag 4s infinite ease-in-out; }
+
+        @keyframes animMouseBlock {
+            0%, 30% { transform: translate(-10px, 10px); }
+            70%, 100% { transform: translate(20px, -10px); }
+        }
+        .anim-mouse-block { animation: animMouseBlock 4s infinite ease-in-out; }
+
+        @keyframes animBlockGrow {
+            0%, 20%, 100% { transform: scale(1); }
+            50%, 80% { transform: scale(1.3); }
+        }
+        .anim-block-grow { animation: animBlockGrow 3s infinite ease-in-out; }
+
+        @keyframes animMouseScroll {
+            0%, 100% { transform: translateY(-2px); opacity: 0.5; }
+            50% { transform: translateY(2px); opacity: 1; }
+        }
+        .anim-mouse-scroll { animation: animMouseScroll 1.5s infinite ease-in-out; }
+
+        @keyframes animFistUp {
+            0%, 20%, 100% { transform: translateY(10px) scale(1.2); }
+            50%, 80% { transform: translateY(-15px) scale(1.2); }
+        }
+        .anim-fist-up { animation: animFistUp 3s infinite ease-in-out; }
+        
+        @keyframes animVrScaleL {
+            0%, 20%, 100% { transform: translateX(0) scale(0.6); border-width: 4px; }
+            50%, 80% { transform: translateX(-15px) scale(0.6); border-width: 4px; }
+        }
+        @keyframes animVrScaleR {
+            0%, 20%, 100% { transform: translateX(0) scale(0.6); border-width: 4px; }
+            50%, 80% { transform: translateX(15px) scale(0.6); border-width: 4px; }
+        }
+        .anim-vr-scale-l { animation: animVrScaleL 3s infinite ease-in-out; }
+        .anim-vr-scale-r { animation: animVrScaleR 3s infinite ease-in-out; }
+
+        @keyframes animScaleLine {
+            0%, 100% { transform: scaleX(0.5); opacity: 0.5; }
+            50% { transform: scaleX(1); opacity: 1; }
+        }
+        .anim-scale-line { animation: animScaleLine 3s infinite ease-in-out; transform-origin: center; }
+
+        @keyframes animFlick {
+            0% { transform: translateX(0) scale(1); opacity: 0; }
+            10% { transform: translateX(10px) scale(1.2); opacity: 1; }
+            20% { transform: translateX(80px) scale(0.8); opacity: 0; }
+            100% { opacity: 0; }
+        }
+        @keyframes animBlockFlick1 {
+            0%, 20% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+            35% { transform: translate(30px, -40px) rotate(45deg); opacity: 0; }
+            100% { opacity: 0; }
+        }
+        @keyframes animBlockFlick2 {
+            0%, 20% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+            35% { transform: translate(40px, -20px) rotate(90deg); opacity: 0; }
+            100% { opacity: 0; }
+        }
+        @keyframes animBlockFlick3 {
+            0%, 20% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+            35% { transform: translate(20px, -10px) rotate(15deg); opacity: 0; }
+            100% { opacity: 0; }
+        }
+        .anim-flick { animation: animFlick 3s infinite cubic-bezier(0.1, 0.9, 0.2, 1); }
+        .anim-block:nth-child(1) { animation: animBlockFlick1 3s infinite ease-out; }
+        .anim-block:nth-child(2) { animation: animBlockFlick2 3s infinite ease-out; }
+        .anim-block:nth-child(3) { animation: animBlockFlick3 3s infinite ease-out; }
     </style>
 
 </head>
@@ -82,6 +166,110 @@
         <video id="webcam" autoplay playsinline class="w-full h-full object-cover scale-x-[-1]"></video>
     </div>
     <div id="hand-cursor"></div>
+
+    <div id="tutorial-overlay" class="absolute inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md bg-slate-900/80 pointer-events-auto transition-opacity duration-300">
+        <div class="glass p-6 sm:p-8 rounded-2xl max-w-4xl w-full text-slate-200 shadow-2xl border border-[#00f2ff]/30 relative overflow-y-auto max-h-[90vh] custom-scrollbar flex flex-col">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00f2ff] via-[#ff00d4] to-[#00f2ff]"></div>
+            <h2 class="text-2xl sm:text-3xl font-black text-[#00f2ff] mb-6 glow-text tracking-tighter uppercase text-center shrink-0">How to Play</h2>
+            
+            <!-- Tabs -->
+            <div class="flex justify-center gap-2 mb-6 shrink-0" id="tut-tabs">
+                <button class="tut-tab active px-4 py-2 bg-[#00f2ff]/20 text-[#00f2ff] rounded-t-lg border-b-2 border-[#00f2ff] font-bold text-xs sm:text-sm tracking-wide transition-all" data-target="tut-desktop">Desktop</button>
+                <button class="tut-tab px-4 py-2 bg-slate-800/50 text-slate-400 rounded-t-lg border-b-2 border-transparent font-bold text-xs sm:text-sm tracking-wide transition-all hover:text-slate-200" data-target="tut-webcam">Webcam Hands</button>
+                <button class="tut-tab px-4 py-2 bg-slate-800/50 text-slate-400 rounded-t-lg border-b-2 border-transparent font-bold text-xs sm:text-sm tracking-wide transition-all hover:text-slate-200" data-target="tut-vr">VR</button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto min-h-[300px]">
+                <!-- Desktop -->
+                <div id="tut-desktop" class="tut-content grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 active">
+                    <div class="flex flex-col flex-1 items-center bg-slate-800/50 p-6 rounded-xl border border-slate-700">
+                        <div class="h-32 relative w-full flex items-center justify-center mb-4 perspective-1000">
+                            <div class="anim-mouse-block border border-white/20 bg-[#00f2ff] w-12 h-12 absolute rounded shadow-[0_0_15px_rgba(0,242,255,0.4)]"></div>
+                            <div class="anim-mouse-drag absolute mt-8 ml-8 w-6 h-6 border-2 border-white rounded-full bg-white/20"></div> 
+                        </div>
+                        <h3 class="text-[#00f2ff] font-bold text-sm tracking-widest uppercase mb-2 text-center">Move & Orbit</h3>
+                        <p class="text-xs text-slate-300 text-center leading-relaxed">Left-click & drag to move.<br>Right-click to orbit.</p>
+                    </div>
+                    
+                    <div class="flex flex-col flex-1 items-center bg-slate-800/50 p-6 rounded-xl border border-slate-700">
+                        <div class="h-32 relative w-full flex items-center justify-center mb-4 perspective-1000">
+                            <div class="anim-block-grow border border-white/20 bg-[#ff00d4] w-12 h-12 absolute rounded shadow-[0_0_15px_rgba(255,0,212,0.4)]"></div>
+                            <div class="absolute w-4 h-8 border-2 border-white/50 rounded-full flex justify-center pt-1"><div class="anim-mouse-scroll w-1 h-2 bg-white rounded-full"></div></div>
+                        </div>
+                        <h3 class="text-[#ff00d4] font-bold text-sm tracking-widest uppercase mb-2 text-center">Scale</h3>
+                        <p class="text-xs text-slate-300 text-center leading-relaxed">Select a block and<br>scroll wheel to scale.</p>
+                    </div>
+                </div>
+
+                <!-- Webcam Tracking -->
+                <div id="tut-webcam" class="tut-content grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 hidden">
+                    <div class="flex flex-col flex-1 items-center bg-slate-800/50 p-6 rounded-xl border border-slate-700">
+                        <div class="h-32 relative w-full flex items-center justify-center mb-4 perspective-1000">
+                            <div class="anim-pinch relative w-16 h-16 border-2 border-[#ff00d4] rounded-full drop-shadow-[0_0_10px_rgba(255,0,212,0.8)]">
+                                <div class="absolute inset-2 bg-[#ff00d4]/20 rounded-full"></div>
+                            </div>
+                        </div>
+                        <h3 class="text-[#ff00d4] font-bold text-sm tracking-widest uppercase mb-2 text-center">Grab & Move</h3>
+                        <p class="text-xs text-slate-300 text-center leading-relaxed">Pinch index & thumb<br>together to grab blocks.</p>
+                    </div>
+                    
+                    <div class="flex flex-col flex-1 items-center bg-slate-800/50 p-6 rounded-xl border border-slate-700">
+                        <div class="h-32 relative w-full flex items-center justify-center mb-4 perspective-1000">
+                            <div class="anim-fist-up relative w-16 h-16 border-4 border-[#00ffaa] bg-[#00ffaa]/40 rounded-full drop-shadow-[0_0_15px_rgba(0,255,170,0.8)] flex items-center justify-center">
+                            </div>
+                        </div>
+                        <h3 class="text-[#00ffaa] font-bold text-sm tracking-widest uppercase mb-2 text-center">Scale</h3>
+                        <p class="text-xs text-slate-300 text-center leading-relaxed">Make a fist and move<br>hand up/down.</p>
+                    </div>
+                </div>
+
+                <!-- VR Headset -->
+                <div id="tut-vr" class="tut-content grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 hidden">
+                    <div class="flex flex-col flex-1 items-center bg-slate-800/50 p-4 sm:p-6 rounded-xl border border-slate-700">
+                        <div class="h-24 relative w-full flex items-center justify-center mb-4 perspective-1000">
+                            <div class="anim-pinch relative w-12 h-12 border-2 border-[#00f2ff] rounded-full drop-shadow-[0_0_10px_rgba(0,242,255,0.8)]">
+                                <div class="absolute inset-2 bg-[#00f2ff]/20 rounded-full"></div>
+                            </div>
+                        </div>
+                        <h3 class="text-[#00f2ff] font-bold text-xs tracking-widest uppercase mb-2 text-center">Grab</h3>
+                        <p class="text-[10px] text-slate-300 text-center leading-relaxed">Pinch thumb & index.</p>
+                    </div>
+                    
+                    <div class="flex flex-col flex-1 items-center bg-slate-800/50 p-4 sm:p-6 rounded-xl border border-slate-700">
+                        <div class="h-24 relative w-full flex items-center justify-center mb-4 perspective-1000">
+                            <div class="anim-vr-scale-l absolute left-1/4 w-8 h-8 border-4 border-[#00ffaa] bg-[#00ffaa]/20 rounded-full drop-shadow-[0_0_10px_rgba(0,255,170,0.8)]"></div>
+                            <div class="anim-vr-scale-r absolute right-1/4 w-8 h-8 border-4 border-[#00ffaa] bg-[#00ffaa]/20 rounded-full drop-shadow-[0_0_10px_rgba(0,255,170,0.8)]"></div>
+                            <div class="absolute inset-x-8 border-t-2 border-dashed border-[#00ffaa]/50 top-1/2 -mt-px anim-scale-line z-[-1]"></div>
+                        </div>
+                        <h3 class="text-[#00ffaa] font-bold text-xs tracking-widest uppercase mb-2 text-center">Scale</h3>
+                        <p class="text-[10px] text-slate-300 text-center leading-relaxed">Pinch block with both<br>hands and spread.</p>
+                    </div>
+
+                    <div class="flex flex-col flex-1 items-center bg-slate-800/50 p-4 sm:p-6 rounded-xl border border-slate-700">
+                        <div class="h-24 relative w-full flex items-center justify-center mb-4 perspective-1000 overflow-hidden rounded-lg">
+                            <div class="relative w-20 h-20">
+                                <div class="anim-block border border-white/20 bg-[#ff00d4] w-5 h-5 absolute bottom-0 left-1/2 -ml-2.5"></div>
+                                <div class="anim-block border border-white/20 bg-[#ff00d4] w-5 h-5 absolute bottom-5 left-1/2 -ml-2.5"></div>
+                                <div class="anim-block border border-white/20 bg-[#ff00d4] w-5 h-5 absolute bottom-10 left-1/2 -ml-2.5"></div>
+                            </div>
+                            <div class="anim-flick absolute w-6 h-6 rounded-full border-2 border-white bg-white/30 backdrop-blur-sm -left-2"></div>
+                        </div>
+                        <h3 class="text-[#ff00d4] font-bold text-xs tracking-widest uppercase mb-2 text-center">Scatter</h3>
+                        <p class="text-[10px] text-slate-300 text-center leading-relaxed">Flick hand quickly<br>to scatter blocks.</p>
+                    </div>
+
+                    <div class="flex flex-col flex-1 items-center bg-slate-800/50 p-4 sm:p-6 rounded-xl border border-slate-700 justify-center">
+                        <h3 class="text-white font-bold text-xs tracking-widest uppercase mb-2 text-center">UI Push & Move</h3>
+                        <p class="text-[10px] text-slate-300 text-center leading-relaxed">Poke buttons with index finger, or pinch the panel to move it.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="btn-start" class="mt-6 shrink-0 w-full py-4 bg-[#00f2ff]/20 hover:bg-[#00f2ff]/40 border border-[#00f2ff] text-[#00f2ff] font-black text-sm sm:text-lg tracking-widest uppercase rounded shadow-[0_0_20px_rgba(0,242,255,0.3)] transition-all cursor-pointer">
+                Play Now
+            </button>
+        </div>
+    </div>
 
     <script type="module">
         import * as THREE from 'https://esm.sh/three@0.160.0';
@@ -174,9 +362,9 @@
                 if (!b.userData.isScaling && !vrControllers.some(c => c.grabObj === b) && selectedBlock !== b) {
                     b.userData.isPhysics = true;
                     b.userData.velocity = new THREE.Vector3(
-                        (Math.random() - 0.5) * 0.08,
-                        Math.random() * 0.08 + 0.02,
-                        (Math.random() - 0.5) * 0.08
+                        (Math.random() - 0.5) * 0.15,
+                        Math.random() * 0.15 + 0.05,
+                        (Math.random() - 0.5) * 0.15
                     );
                 }
             });
@@ -374,10 +562,6 @@
                     dragOffset.copy(selectedBlock.position).sub(planeIntersect[0].point);
                     dragOffset.y = 0; 
                 }
-                blocks.forEach(b => { if (b.userData.outline) b.userData.outline.material.opacity = 0; });
-                if (selectedBlock && selectedBlock.userData.outline) {
-                    selectedBlock.userData.outline.material.opacity = 0.8;
-                }
                 playSound('snap');
             }
         }
@@ -411,9 +595,7 @@
                 }
             } else {
                 raycaster.setFromCamera(pointer, camera);
-                const intersects = raycaster.intersectObjects(blocks, false);
-                blocks.forEach(b => { if(b !== selectedBlock && b.userData.outline) b.userData.outline.material.opacity = 0; });
-                if(intersects.length > 0 && intersects[0].object.userData.outline) intersects[0].object.userData.outline.material.opacity = 0.3;
+                raycaster.intersectObjects(blocks, false);
             }
         }
 
@@ -494,6 +676,26 @@
         document.getElementById('btn-delete').addEventListener('click', () => { if (audioCtx.state === 'suspended') audioCtx.resume(); handleDelete(); });
         document.getElementById('btn-color').addEventListener('click', () => { if (audioCtx.state === 'suspended') audioCtx.resume(); handleColor(); });
         document.getElementById('btn-grid').addEventListener('click', () => { if (audioCtx.state === 'suspended') audioCtx.resume(); handleGrid(); });
+        
+        document.getElementById('btn-start').addEventListener('click', () => {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            document.getElementById('tutorial-overlay').style.opacity = '0';
+            setTimeout(() => document.getElementById('tutorial-overlay').style.display = 'none', 300);
+        });
+
+        document.querySelectorAll('.tut-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tut-tab').forEach(t => {
+                    t.classList.remove('active', 'bg-[#00f2ff]/20', 'text-[#00f2ff]', 'border-[#00f2ff]');
+                    t.classList.add('bg-slate-800/50', 'text-slate-400', 'border-transparent');
+                });
+                tab.classList.remove('bg-slate-800/50', 'text-slate-400', 'border-transparent');
+                tab.classList.add('active', 'bg-[#00f2ff]/20', 'text-[#00f2ff]', 'border-[#00f2ff]');
+                
+                document.querySelectorAll('.tut-content').forEach(c => c.classList.add('hidden'));
+                document.getElementById(tab.dataset.target).classList.remove('hidden');
+            });
+        });
 
         window.addEventListener('keydown', (e) => {
             if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -546,9 +748,34 @@
             data.ray.ray.origin.setFromMatrixPosition(ctrl.matrixWorld);
             data.ray.ray.direction.set(0, 0, -1).applyMatrix4(mat);
             
+            const handPos = new THREE.Vector3().setFromMatrixPosition(ctrl.matrixWorld);
+
             if (vrUIGroup.visible) {
                 const uiBgHits = data.ray.intersectObject(uiBg, false);
-                if (uiBgHits.length > 0) {
+                const uiPos = new THREE.Vector3().setFromMatrixPosition(uiBg.matrixWorld);
+                
+                let uiPokeBtn = null;
+                let btnDist = 0.1;
+                uiButtons.forEach(btn => {
+                    const pos = new THREE.Vector3().setFromMatrixPosition(btn.matrixWorld);
+                    const dist = pos.distanceTo(handPos);
+                    if (dist < btnDist) { btnDist = dist; uiPokeBtn = btn; }
+                });
+
+                if (uiPokeBtn) {
+                    uiPokeBtn.material.color.setHex(0xff00d4);
+                    setTimeout(() => { if (uiPokeBtn.material) uiPokeBtn.material.color.setHex(0xffffff) }, 200);
+                    const action = uiPokeBtn.userData.action;
+                    if (action === 'spawn') handleSpawn();
+                    if (action === 'delete') handleDelete();
+                    if (action === 'color') handleColor();
+                    if (action === 'grid') handleGrid();
+                    if (action === 'exit_vr') renderer.xr.getSession().end();
+                    playSound('snap');
+                    return;
+                }
+
+                if (uiBgHits.length > 0 || handPos.distanceTo(uiPos) < 0.35) {
                     data.grabUI = true;
                     ctrl.attach(vrUIGroup);
                     playSound('snap');
@@ -572,8 +799,16 @@
             }
 
             const hits = data.ray.intersectObjects(blocks, false);
-            if(hits.length > 0) {
-                const targetBlock = hits[0].object;
+            let closestBlock = null;
+            let closestDist = 0.15;
+            blocks.forEach(b => {
+                const dist = b.position.distanceTo(handPos);
+                if (dist < closestDist) { closestDist = dist; closestBlock = b; }
+            });
+
+            const targetBlock = hits.length > 0 ? hits[0].object : closestBlock;
+
+            if(targetBlock) {
                 data.grabObj = targetBlock;
                 
                 if (otherData && otherData.grabObj === targetBlock) {
@@ -584,10 +819,7 @@
                     targetBlock.userData.startScale = targetBlock.scale.x;
                     playSound('snap');
                 } else {
-                    blocks.forEach(b => { if (b.userData.outline) b.userData.outline.material.opacity = 0; });
                     selectedBlock = data.grabObj;
-                    if (selectedBlock.userData.outline) selectedBlock.userData.outline.material.opacity = 0.8;
-
                     ctrl.attach(data.grabObj);
                     playSound('snap');
                 }
@@ -859,8 +1091,11 @@
                         if (tipWorldPos.lengthSq() > 0.001) {
                             if (data.lastTipPos) {
                                 const dist = tipWorldPos.distanceTo(data.lastTipPos);
-                                if (dist > 0.05 && dist < 0.3) {
-                                    const now = performance.now();
+                                const now = performance.now();
+                                const deltaTime = now - (data.lastTipTime || now);
+                                const velocity = deltaTime > 0 ? dist / deltaTime : 0;
+
+                                if (velocity > 0.002 && dist > 0.01 && dist < 0.15) {
                                     if (now - (data.lastScatterTime || 0) > 1000) {
                                         data.lastScatterTime = now;
                                         triggerScatter();
@@ -868,6 +1103,7 @@
                                 }
                             }
                             data.lastTipPos = tipWorldPos.clone();
+                            data.lastTipTime = performance.now();
                             
                             uiButtons.forEach(btn => {
                                 const btnPos = new THREE.Vector3().setFromMatrixPosition(btn.matrixWorld);
@@ -909,8 +1145,19 @@
             
             const t = performance.now() * 0.001;
             blocks.forEach((b, i) => {
-                if(b !== selectedBlock && !vrControllers.some(c => c.grabObj === b)) {
-                    b.userData.outline.material.opacity = 0.1 + 0.1 * Math.sin(t*2 + i);
+                if (b === selectedBlock || vrControllers.some(c => c.grabObj === b)) {
+                    if (b.userData.outline) {
+                        b.userData.outline.material.opacity = 0.8 + 0.2 * Math.sin(t*8);
+                        b.userData.outline.material.color.setHex(0xffffff);
+                    }
+                    b.material.emissive.copy(b.material.color);
+                    b.material.emissiveIntensity = 0.3;
+                } else {
+                    if (b.userData.outline) {
+                        b.userData.outline.material.opacity = 0.05;
+                    }
+                    b.material.emissive.copy(b.material.color);
+                    b.material.emissiveIntensity = 0.2;
                 }
                 
                 if (b.userData.isPhysics) {
@@ -918,15 +1165,25 @@
                     b.userData.velocity.y -= 0.005;
                     b.userData.velocity.x *= 0.98;
                     b.userData.velocity.z *= 0.98;
+
+                    if (b.position.x < -gridSize) { b.position.x = -gridSize; b.userData.velocity.x *= -0.8; }
+                    if (b.position.x > gridSize) { b.position.x = gridSize; b.userData.velocity.x *= -0.8; }
+                    if (b.position.z < -gridSize) { b.position.z = -gridSize; b.userData.velocity.z *= -0.8; }
+                    if (b.position.z > gridSize) { b.position.z = gridSize; b.userData.velocity.z *= -0.8; }
                     
                     const floorY = HALF * b.scale.y;
                     if (b.position.y <= floorY) {
                         b.position.y = floorY;
                         b.userData.velocity.y *= -0.4;
+                        b.userData.velocity.x *= 0.8;
+                        b.userData.velocity.z *= 0.8;
                         if (Math.abs(b.userData.velocity.y) < 0.005 && 
                             Math.abs(b.userData.velocity.x) < 0.002 && 
                             Math.abs(b.userData.velocity.z) < 0.002) {
                             b.userData.isPhysics = false;
+                            b.userData.velocity.set(0,0,0);
+                            b.position.x = snap(b.position.x);
+                            b.position.z = snap(b.position.z);
                         }
                     }
                 }

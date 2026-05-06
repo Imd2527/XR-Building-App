@@ -26,24 +26,24 @@
 
 </head>
 <body>
-    <div id="ui-container" class="absolute top-0 left-0 w-full h-full p-8 flex flex-col justify-between pointer-events-none z-10 text-slate-200">
+    <div id="ui-container" class="absolute top-0 left-0 w-full h-full p-4 sm:p-8 flex flex-col justify-between pointer-events-none z-10 text-slate-200 overflow-hidden box-border">
         <!-- HEADER -->
-        <header class="flex justify-between items-start w-full">
+        <header class="flex flex-col sm:flex-row justify-between items-start w-full gap-4">
             <div>
-                <h1 class="text-3xl font-black tracking-tighter text-[#00f2ff] glow-text m-0">XR BUILDING BLOCKS</h1>
+                <h1 class="text-2xl sm:text-3xl font-black tracking-tighter text-[#00f2ff] glow-text m-0">XR BUILDING BLOCKS</h1>
                 <p class="text-[10px] uppercase tracking-widest text-slate-500 mt-1">Spatial Sandbox // v1.0.0</p>
             </div>
-            <div class="glass px-4 py-2 rounded-lg flex items-center gap-4">
+            <div class="glass px-4 py-2 rounded-lg flex flex-wrap sm:flex-nowrap items-center gap-4">
                 <div class="flex flex-col gap-1">
                     <span class="text-[9px] uppercase text-slate-400">Hand Tracking</span>
-                    <span class="text-xs font-mono flex items-center gap-2">
+                    <span class="text-[10px] sm:text-xs font-mono flex items-center gap-2">
                         <div id="cam-status" class="indicator"></div> WEBCAM
                     </span>
                 </div>
-                <div class="w-px h-8 bg-slate-700"></div>
+                <div class="w-px h-6 sm:h-8 bg-slate-700"></div>
                 <div class="flex flex-col gap-1">
                     <span class="text-[9px] uppercase text-slate-400">System</span>
-                    <span class="text-xs font-mono flex items-center gap-2">
+                    <span class="text-[10px] sm:text-xs font-mono flex items-center gap-2">
                         <div id="vr-status" class="indicator active"></div> 3D RUNNING
                     </span>
                 </div>
@@ -51,11 +51,11 @@
         </header>
 
         <!-- FOOTER -->
-        <div class="flex justify-between items-end w-full pointer-events-auto">
-            <div class="flex flex-col gap-3">
-                <div class="glass p-4 rounded-xl w-80">
-                    <h3 class="text-[10px] uppercase font-bold text-[#00f2ff] mb-3 tracking-widest">Hand Tracking & Layout</h3>
-                    <div class="controls-help text-[11px] text-slate-300 space-y-2 mb-4">
+        <div class="flex flex-col-reverse sm:flex-row justify-between items-start sm:items-end w-full pointer-events-auto gap-4 sm:gap-0 pb-4 sm:pb-0 overflow-y-auto sm:overflow-visible custom-scrollbar">
+            <div class="flex flex-col gap-3 w-full sm:w-auto">
+                <div class="glass p-3 sm:p-4 rounded-xl w-full sm:w-80 flex-shrink-0">
+                    <h3 class="text-[10px] uppercase font-bold text-[#00f2ff] mb-2 sm:mb-3 tracking-widest">Hand Tracking & Layout</h3>
+                    <div class="controls-help text-[10px] sm:text-[11px] text-slate-300 space-y-1 sm:space-y-2 mb-3 sm:mb-4">
                         <p><strong>Desktop:</strong> Left-click drag to move, Scroll to scale, Right-click orbit.</p>
                         <p><strong>Hands:</strong> Show palm to hover. Pinch index+thumb to grab & move. Make a fist and pull up/down to scale.</p>
                     </div>
@@ -63,10 +63,10 @@
                 </div>
             </div>
 
-            <div class="flex gap-6 items-center">
-                <div class="text-right glass p-4 rounded-xl">
+            <div class="flex flex-col sm:flex-row gap-4 sm:gap-6 items-end sm:items-center w-full sm:w-auto shrink-0">
+                <div class="text-left sm:text-right glass p-3 sm:p-4 rounded-xl w-full sm:w-auto">
                     <div class="text-[10px] uppercase text-[#00f2ff] font-bold mb-2 tracking-widest">Controls</div>
-                    <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-[11px] font-mono text-left pointer-events-auto">
+                    <div class="grid grid-cols-2 gap-x-4 sm:gap-x-6 gap-y-2 text-[10px] sm:text-[11px] font-mono text-left pointer-events-auto">
                         <button id="btn-spawn" class="text-slate-300 hover:text-white cursor-pointer select-none text-left flex items-center"><span class="bg-slate-800 px-1 rounded mr-1">B</span> SPAWN</button>
                         <button id="btn-delete" class="text-slate-300 hover:text-white cursor-pointer select-none text-left flex items-center"><span class="bg-slate-800 px-1 rounded mr-1">DEL</span> REMOVE</button>
                         <button id="btn-color" class="text-slate-300 hover:text-white cursor-pointer select-none text-left flex items-center"><span class="bg-slate-800 px-1 rounded mr-1">C</span> COLOR</button>
@@ -74,11 +74,11 @@
                     </div>
                 </div>
                 <!-- VR Button Container -->
-                <div id="vr-button-container" class="relative"></div>
+                <div id="vr-button-container" class="relative w-full sm:w-auto flex justify-end"></div>
             </div>
         </div>
     </div>
-    <div id="video-container" class="absolute top-24 right-8 w-40 h-32 glass overflow-hidden pointer-events-none z-10 rounded-xl" style="opacity: 0.5;">
+    <div id="video-container" class="absolute top-36 sm:top-24 right-4 sm:right-8 w-24 h-16 sm:w-40 sm:h-32 glass overflow-hidden pointer-events-none z-10 rounded-xl" style="opacity: 0.5;">
         <video id="webcam" autoplay playsinline class="w-full h-full object-cover scale-x-[-1]"></video>
     </div>
     <div id="hand-cursor"></div>
@@ -138,7 +138,48 @@
                 gain.gain.setValueAtTime(0.1, t);
                 gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
                 osc.start(t); osc.stop(t + 0.2);
+            } else if (type === 'scatter') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(100, t);
+                osc.frequency.exponentialRampToValueAtTime(20, t + 0.5);
+                gain.gain.setValueAtTime(0.2, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+                osc.start(t); osc.stop(t + 0.5);
+
+                const bufferSize = audioCtx.sampleRate * 0.5;
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+                const noise = audioCtx.createBufferSource();
+                noise.buffer = buffer;
+                const noiseFilter = audioCtx.createBiquadFilter();
+                noiseFilter.type = 'lowpass';
+                noiseFilter.frequency.value = 800;
+                noise.connect(noiseFilter);
+                
+                const noiseGain = audioCtx.createGain();
+                noiseGain.gain.setValueAtTime(0.2, t);
+                noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+                noiseFilter.connect(noiseGain);
+                noiseGain.connect(audioCtx.destination);
+                noise.start(t);
             }
+        }
+
+        function triggerScatter() {
+            playSound('scatter', true);
+            blocks.forEach(b => {
+                if (!b.userData.isScaling && !vrControllers.some(c => c.grabObj === b) && selectedBlock !== b) {
+                    b.userData.isPhysics = true;
+                    b.userData.velocity = new THREE.Vector3(
+                        (Math.random() - 0.5) * 0.08,
+                        Math.random() * 0.08 + 0.02,
+                        (Math.random() - 0.5) * 0.08
+                    );
+                }
+            });
         }
 
         // --- SCENE SETUP ---
@@ -183,7 +224,7 @@
             ctx.fillText(text, 128, 32);
             
             const tex = new THREE.CanvasTexture(canvas);
-            const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.9, side: THREE.DoubleSide });
+            const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.9, side: THREE.DoubleSide, color: 0xffffff });
             const geo = new THREE.PlaneGeometry(0.2, 0.05);
             const mesh = new THREE.Mesh(geo, mat);
             mesh.position.set(x, y, 0);
@@ -196,6 +237,11 @@
         create3DButton('COLOR', -0.12, 0.01, 'color');
         create3DButton('GRID', 0.12, 0.01, 'grid');
         create3DButton('EXIT VR', 0, -0.06, 'exit_vr');
+
+        const uiBgMat = new THREE.MeshBasicMaterial({ color: 0x1e293b, transparent: true, opacity: 0.8, side: THREE.DoubleSide });
+        const uiBg = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.25), uiBgMat);
+        uiBg.position.set(0, 0.01, -0.01);
+        vrUIGroup.add(uiBg);
 
         vrUIGroup.visible = false;
 
@@ -298,9 +344,9 @@
             return block;
         }
 
-        spawnBlock(-0.4, HALF, 0);
-        spawnBlock(0, HALF, 0);
-        spawnBlock(0.4, HALF, 0);
+        spawnBlock(-0.4, HALF, -1);
+        spawnBlock(0, HALF, -1);
+        spawnBlock(0.4, HALF, -1);
 
         // --- DESKTOP & CAM INTERACTION ---
         const raycaster = new THREE.Raycaster();
@@ -495,14 +541,26 @@
 
         function onVRGrab(ctrl) {
             const data = vrControllers.find(x => x.c === ctrl);
+            const otherData = vrControllers.find(x => x.c !== ctrl);
             const mat = new THREE.Matrix4().extractRotation(ctrl.matrixWorld);
             data.ray.ray.origin.setFromMatrixPosition(ctrl.matrixWorld);
             data.ray.ray.direction.set(0, 0, -1).applyMatrix4(mat);
             
             if (vrUIGroup.visible) {
+                const uiBgHits = data.ray.intersectObject(uiBg, false);
+                if (uiBgHits.length > 0) {
+                    data.grabUI = true;
+                    ctrl.attach(vrUIGroup);
+                    playSound('snap');
+                    return;
+                }
+                
                 const uiHits = data.ray.intersectObjects(uiButtons, false);
                 if (uiHits.length > 0) {
-                    const action = uiHits[0].object.userData.action;
+                    const btn = uiHits[0].object;
+                    const action = btn.userData.action;
+                    btn.material.color.setHex(0xff00d4);
+                    setTimeout(() => { if (btn.material) btn.material.color.setHex(0xffffff) }, 200);
                     if (action === 'spawn') handleSpawn();
                     if (action === 'delete') handleDelete();
                     if (action === 'color') handleColor();
@@ -515,41 +573,53 @@
 
             const hits = data.ray.intersectObjects(blocks, false);
             if(hits.length > 0) {
-                data.grabObj = hits[0].object;
+                const targetBlock = hits[0].object;
+                data.grabObj = targetBlock;
                 
-                blocks.forEach(b => { if (b.userData.outline) b.userData.outline.material.opacity = 0; });
-                selectedBlock = data.grabObj;
-                if (selectedBlock.userData.outline) selectedBlock.userData.outline.material.opacity = 0.8;
+                if (otherData && otherData.grabObj === targetBlock) {
+                    targetBlock.userData.isScaling = true;
+                    const p1 = new THREE.Vector3().setFromMatrixPosition(data.c.matrixWorld);
+                    const p2 = new THREE.Vector3().setFromMatrixPosition(otherData.c.matrixWorld);
+                    targetBlock.userData.startScaleDist = p1.distanceTo(p2);
+                    targetBlock.userData.startScale = targetBlock.scale.x;
+                    playSound('snap');
+                } else {
+                    blocks.forEach(b => { if (b.userData.outline) b.userData.outline.material.opacity = 0; });
+                    selectedBlock = data.grabObj;
+                    if (selectedBlock.userData.outline) selectedBlock.userData.outline.material.opacity = 0.8;
 
-                ctrl.attach(data.grabObj);
-                playSound('snap');
+                    ctrl.attach(data.grabObj);
+                    playSound('snap');
+                }
             }
         }
 
-        function onVRSqueezeStart(ctrl) {
-            const data = vrControllers.find(x => x.c === ctrl);
-            const mat = new THREE.Matrix4().extractRotation(ctrl.matrixWorld);
-            data.ray.ray.origin.setFromMatrixPosition(ctrl.matrixWorld);
-            data.ray.ray.direction.set(0, 0, -1).applyMatrix4(mat);
-            const hits = data.ray.intersectObjects(blocks, false);
-            if(hits.length > 0) {
-                data.squeezeObj = hits[0].object;
-                const pos = new THREE.Vector3();
-                pos.setFromMatrixPosition(ctrl.matrixWorld);
-                data.startY = pos.y;
-                data.startScale = data.squeezeObj.scale.x;
-            }
-        }
-
-        function onVRSqueezeEnd(ctrl) {
-            const data = vrControllers.find(x => x.c === ctrl);
-            if (data) data.squeezeObj = null;
-        }
+        function onVRSqueezeStart(ctrl) {}
+        function onVRSqueezeEnd(ctrl) {}
 
         function onVRRelease(ctrl) {
             const data = vrControllers.find(x => x.c === ctrl);
-            if(!data || !data.grabObj) return;
+            const otherData = vrControllers.find(x => x.c !== ctrl);
+            if(!data) return;
+            
+            if (data.grabUI) {
+                scene.attach(vrUIGroup);
+                data.grabUI = false;
+                return;
+            }
+            
+            if(!data.grabObj) return;
             const obj = data.grabObj;
+            
+            if (obj.userData.isScaling) {
+                obj.userData.isScaling = false;
+                data.grabObj = null;
+                if (otherData && otherData.grabObj === obj) {
+                    otherData.c.attach(obj);
+                }
+                return;
+            }
+            
             scene.attach(obj);
             
             const newX = snap(obj.position.x);
@@ -736,7 +806,7 @@
             
             const sortedBlocks = [...blocks].sort((a, b) => a.position.y - b.position.y);
             for (const b of sortedBlocks) {
-                if (b === selectedBlock || vrControllers.some(c => c.grabObj === b)) continue;
+                if (b === selectedBlock || vrControllers.some(c => c.grabObj === b) || b.userData.isPhysics) continue;
                 
                 let targetY = HALF * b.scale.y;
                 let maxObstacleY = -Infinity;
@@ -782,22 +852,83 @@
             }
             
             vrControllers.forEach(data => {
-                if (data.squeezeObj) {
-                    const pos = new THREE.Vector3();
-                    pos.setFromMatrixPosition(data.c.matrixWorld);
-                    let diffY = pos.y - data.startY;
-                    let newScale = Math.max(0.5, Math.min(3.0, data.startScale + diffY * 5.0));
-                    if (Math.abs(data.squeezeObj.scale.x - newScale) > 0.05) {
-                        data.squeezeObj.scale.setScalar(newScale);
-                        playSound('snap');
+                if (vrUIGroup.visible && data.hand && data.hand.joints && Object.keys(data.hand.joints).length > 0) {
+                    const tip = data.hand.joints['index-finger-tip'];
+                    if (tip) {
+                        const tipWorldPos = new THREE.Vector3().setFromMatrixPosition(tip.matrixWorld);
+                        if (tipWorldPos.lengthSq() > 0.001) {
+                            if (data.lastTipPos) {
+                                const dist = tipWorldPos.distanceTo(data.lastTipPos);
+                                if (dist > 0.05 && dist < 0.3) {
+                                    const now = performance.now();
+                                    if (now - (data.lastScatterTime || 0) > 1000) {
+                                        data.lastScatterTime = now;
+                                        triggerScatter();
+                                    }
+                                }
+                            }
+                            data.lastTipPos = tipWorldPos.clone();
+                            
+                            uiButtons.forEach(btn => {
+                                const btnPos = new THREE.Vector3().setFromMatrixPosition(btn.matrixWorld);
+                                if (tipWorldPos.distanceTo(btnPos) < 0.05) {
+                                    const now = performance.now();
+                                    if (now - (btn.userData.pressedTime || 0) > 1000) {
+                                        btn.userData.pressedTime = now;
+                                        btn.material.color.setHex(0xff00d4);
+                                        setTimeout(() => { if (btn.material) btn.material.color.setHex(0xffffff) }, 200);
+                                        const action = btn.userData.action;
+                                        if (action === 'spawn') handleSpawn();
+                                        if (action === 'delete') handleDelete();
+                                        if (action === 'color') handleColor();
+                                        if (action === 'grid') handleGrid();
+                                        if (action === 'exit_vr') renderer.xr.getSession().end();
+                                        playSound('snap');
+                                    }
+                                }
+                            });
+                        }
                     }
                 }
             });
+
+            const c0 = vrControllers[0];
+            const c1 = vrControllers[1];
+            if (c0 && c1 && c0.grabObj && c1.grabObj && c0.grabObj === c1.grabObj && c0.grabObj.userData.isScaling) {
+                const targetBlock = c0.grabObj;
+                const p1 = new THREE.Vector3().setFromMatrixPosition(c0.c.matrixWorld);
+                const p2 = new THREE.Vector3().setFromMatrixPosition(c1.c.matrixWorld);
+                const currentDist = p1.distanceTo(p2);
+                const scaleRatio = currentDist / targetBlock.userData.startScaleDist;
+                let newScale = targetBlock.userData.startScale * scaleRatio;
+                newScale = Math.max(0.5, Math.min(3.0, newScale));
+                if (Math.abs(targetBlock.scale.x - newScale) > 0.05) {
+                    targetBlock.scale.setScalar(newScale);
+                }
+            }
             
             const t = performance.now() * 0.001;
             blocks.forEach((b, i) => {
                 if(b !== selectedBlock && !vrControllers.some(c => c.grabObj === b)) {
                     b.userData.outline.material.opacity = 0.1 + 0.1 * Math.sin(t*2 + i);
+                }
+                
+                if (b.userData.isPhysics) {
+                    b.position.add(b.userData.velocity);
+                    b.userData.velocity.y -= 0.005;
+                    b.userData.velocity.x *= 0.98;
+                    b.userData.velocity.z *= 0.98;
+                    
+                    const floorY = HALF * b.scale.y;
+                    if (b.position.y <= floorY) {
+                        b.position.y = floorY;
+                        b.userData.velocity.y *= -0.4;
+                        if (Math.abs(b.userData.velocity.y) < 0.005 && 
+                            Math.abs(b.userData.velocity.x) < 0.002 && 
+                            Math.abs(b.userData.velocity.z) < 0.002) {
+                            b.userData.isPhysics = false;
+                        }
+                    }
                 }
             });
             renderer.render(scene, camera);

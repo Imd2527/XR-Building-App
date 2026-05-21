@@ -112,10 +112,14 @@
 <body>
     <div id="ui-container" class="absolute top-0 left-0 w-full h-full p-4 sm:p-8 flex flex-col justify-between pointer-events-none z-10 text-slate-200 overflow-hidden box-border">
         <!-- HEADER -->
-        <header class="flex flex-col sm:flex-row justify-between items-start w-full gap-4">
+        <header class="flex flex-col sm:flex-row justify-between items-start w-full gap-4 relative z-20">
             <div>
                 <h1 class="text-2xl sm:text-3xl font-black tracking-tighter text-[#00f2ff] glow-text m-0">XR BUILDING BLOCKS</h1>
                 <p class="text-[10px] uppercase tracking-widest text-slate-500 mt-1">Spatial Sandbox // v1.0.0</p>
+                <div class="mt-4 pointer-events-auto flex gap-2">
+                    <button id="btn-mode-sandbox" class="px-3 py-1 bg-[#00f2ff]/20 text-[#00f2ff] text-[10px] uppercase font-bold rounded border border-[#00f2ff] hover:bg-[#00f2ff]/40 transition-all cursor-pointer">Sandbox Mode</button>
+                    <button id="btn-mode-blueprint" class="px-3 py-1 bg-slate-800/50 text-slate-400 text-[10px] uppercase font-bold rounded border border-transparent hover:text-white transition-all cursor-pointer">Blueprints</button>
+                </div>
             </div>
             <div class="glass px-4 py-2 rounded-lg flex flex-wrap sm:flex-nowrap items-center gap-4">
                 <div class="flex flex-col gap-1">
@@ -162,9 +166,50 @@
             </div>
         </div>
     </div>
-    <div id="video-container" class="absolute top-36 sm:top-24 right-4 sm:right-8 w-24 h-16 sm:w-40 sm:h-32 glass overflow-hidden pointer-events-none z-10 rounded-xl" style="opacity: 0.5;">
+    <div id="video-container" class="absolute top-48 sm:top-24 right-4 sm:right-8 w-24 h-16 sm:w-40 sm:h-32 glass overflow-hidden pointer-events-none z-10 rounded-xl" style="opacity: 0.5;">
         <video id="webcam" autoplay playsinline class="w-full h-full object-cover scale-x-[-1]"></video>
     </div>
+    
+    <!-- Game Progress Tracker (Blueprint Mode) -->
+    <div id="game-progress" class="absolute top-36 left-4 sm:left-8 glass p-4 rounded-xl hidden flex flex-col pointer-events-auto z-10 w-64 backdrop-blur-md border border-[#ff00d4]/30 shadow-[0_0_20px_rgba(255,0,212,0.15)] transition-opacity duration-300">
+        <h3 class="text-[10px] uppercase font-bold text-[#ff00d4] tracking-widest mb-1 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-[#ff00d4] animate-pulse"></span>
+            Blueprint Mode
+        </h3>
+        <div class="text-xs font-bold text-slate-200 flex justify-between mb-3 mt-1">
+            <span id="prog-name">Neon Fox</span>
+            <span id="prog-pct" class="text-[#00f2ff]">0%</span>
+        </div>
+        <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden relative">
+            <div id="prog-bar" class="absolute top-0 left-0 h-full bg-gradient-to-r from-[#00f2ff] to-[#ff00d4] w-0 transition-all duration-500 shadow-[0_0_10px_#ff00d4]"></div>
+        </div>
+        <button id="btn-scale-world" class="mt-4 w-full py-1.5 bg-white/10 hover:bg-white/20 text-white text-[10px] uppercase font-bold rounded hidden transition-all cursor-pointer">
+            Toggle Scale (Mini/Life-Size)
+        </button>
+    </div>
+
+    <!-- Blueprint Menu Overlay -->
+    <div id="blueprint-menu" class="absolute inset-0 flex items-center justify-center p-4 backdrop-blur-md bg-slate-900/90 pointer-events-auto z-40 transition-opacity duration-300 opacity-0 hidden">
+        <div class="glass p-8 rounded-2xl w-full max-w-4xl flex flex-col relative overflow-hidden text-slate-200 border border-[#00f2ff]/30 shadow-[0_0_50px_rgba(0,242,255,0.1)]">
+            <h2 class="text-3xl font-black text-[#00f2ff] mb-2 glow-text tracking-tighter uppercase text-center shrink-0">Holographic Blueprints</h2>
+            <p class="text-center text-slate-400 text-sm mb-8">Select a spatial blueprint to begin holographic construction.</p>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 overflow-y-auto custom-scrollbar p-2" id="bp-list">
+                <!-- Dynamically generated -->
+            </div>
+            
+            <button id="bp-close" class="mt-8 w-full py-3 border border-slate-600 bg-slate-800/50 hover:bg-slate-700/50 hover:border-slate-400 text-white font-bold text-sm tracking-widest uppercase rounded transition-all cursor-pointer">
+                Cancel
+            </button>
+        </div>
+    </div>
+
+    <!-- Completion Overlay -->
+    <div id="completion-overlay" class="absolute inset-x-0 top-1/4 flex flex-col items-center justify-center p-4 bg-transparent pointer-events-none z-50 transition-opacity duration-1000 opacity-0 hidden">
+        <h1 class="text-4xl sm:text-6xl font-black text-[#00f2ff] glow-text tracking-tighter uppercase text-center drop-shadow-[0_0_20px_rgba(0,242,255,1)]" style="text-shadow: 0 0 30px #00f2ff, 0 0 50px #ff00d4;">STRUCTURE COMPLETE</h1>
+        <p class="text-[#ff00d4] tracking-[0.5em] text-sm sm:text-base mt-2 font-bold uppercase drop-shadow-[0_0_10px_#ff00d4]">Pattern Analyzed & Activated</p>
+    </div>
+
     <div id="hand-cursor"></div>
 
     <div id="tutorial-overlay" class="absolute inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md bg-slate-900/80 pointer-events-auto transition-opacity duration-300">
@@ -424,10 +469,12 @@
         create3DButton('REMOVE', 0.12, 0.08, 'delete');
         create3DButton('COLOR', -0.12, 0.01, 'color');
         create3DButton('GRID', 0.12, 0.01, 'grid');
-        create3DButton('EXIT VR', 0, -0.06, 'exit_vr');
+        create3DButton('BLUEPRINT', -0.12, -0.06, 'next_blueprint');
+        create3DButton('SCALE', 0.12, -0.06, 'scale_world');
+        create3DButton('EXIT VR', 0, -0.13, 'exit_vr');
 
         const uiBgMat = new THREE.MeshBasicMaterial({ color: 0x1e293b, transparent: true, opacity: 0.8, side: THREE.DoubleSide });
-        const uiBg = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.25), uiBgMat);
+        const uiBg = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.35), uiBgMat);
         uiBg.position.set(0, 0.01, -0.01);
         vrUIGroup.add(uiBg);
 
@@ -524,7 +571,7 @@
 
         // --- BLOCKS ---
         const blocks = [];
-        const neonColors = [0xff0055, 0x00ffcc, 0x0055ff, 0xffaa00, 0xaa00ff];
+        const neonColors = [0xff0055, 0x00ffcc, 0x0055ff, 0xffaa00, 0xaa00ff, 0x00f2ff, 0xff00d4, 0xffffff];
         const boxGeo = new THREE.BoxGeometry(BOX_SIZE, BOX_SIZE, BOX_SIZE);
         const outlineGeo = new THREE.EdgesGeometry(boxGeo);
 
@@ -568,6 +615,7 @@
             raycaster.setFromCamera(pointer, camera);
             const intersects = raycaster.intersectObjects(blocks, false);
             if (intersects.length > 0) {
+                if (intersects[0].object.userData.isLocked) return;
                 controls.enabled = false;
                 selectedBlock = intersects[0].object;
                 isDragging = true;
@@ -605,6 +653,22 @@
                         targetY = highest.position.y + HALF * highest.scale.y + HALF * selectedBlock.scale.y;
                     }
                     
+                    if (activeBlueprint && typeof ghostBlocks !== 'undefined') {
+                        // find closest matching ghost block in XZ column
+                        for(let i=0; i<ghostBlocks.length; i++) {
+                            const gb = ghostBlocks[i];
+                            if(gb.filled) continue;
+                            if (Math.abs(selectedBlock.scale.x - gb.data.s) > gb.data.s * 0.25) continue;
+                            if (selectedBlock.material.color.getHex() !== gb.data.c) continue;
+                            const dx = Math.abs(newX - gb.mesh.position.x);
+                            const dz = Math.abs(newZ - gb.mesh.position.z);
+                            if (dx < 0.15 && dz < 0.15) {
+                                targetY = gb.mesh.position.y;
+                                break;
+                            }
+                        }
+                    }
+                    
                     const newPos = new THREE.Vector3(newX, targetY, newZ);
                     if (newPos.distanceTo(selectedBlock.position) > 0.001) {
                         selectedBlock.position.copy(newPos);
@@ -637,12 +701,15 @@
                     }
                 }
 
-                if (joined) {
-                    playSound('stack', true);
-                    emitSparkles(selectedBlock.position, selectedBlock.material.color.getHex());
-                } else {
-                    playSound('place', true);
+                if (!activeBlueprint) {
+                    if (joined) {
+                        playSound('stack', true);
+                        emitSparkles(selectedBlock.position, selectedBlock.material.color.getHex());
+                    } else {
+                        playSound('place', true);
+                    }
                 }
+                if (typeof checkBlueprintSnap === 'function') checkBlueprintSnap(selectedBlock);
             }
             isDragging = false;
             controls.enabled = true;
@@ -661,7 +728,17 @@
                 const delta = -Math.sign(e.deltaY) * 0.2;
                 selectedBlock.scale.addScalar(delta);
                 selectedBlock.scale.clampScalar(0.5, 3.0);
-                if (Math.abs(oldScale - selectedBlock.scale.x) > 0.05) playSound('snap');
+                if (Math.abs(oldScale - selectedBlock.scale.x) > 0.05) {
+                    playSound('snap');
+                    if (activeBlueprint && typeof checkBlueprintSnap === 'function') {
+                        checkBlueprintSnap(selectedBlock);
+                        if (selectedBlock && selectedBlock.userData.isLocked) {
+                            isDragging = false;
+                            controls.enabled = true;
+                            selectedBlock = null;
+                        }
+                    }
+                }
             }
         });
 
@@ -670,7 +747,7 @@
         }
 
         function handleDelete() {
-            if (selectedBlock) {
+            if (selectedBlock && !selectedBlock.userData.isLocked) {
                 scene.remove(selectedBlock);
                 blocks.splice(blocks.indexOf(selectedBlock), 1);
                 playSound('delete');
@@ -679,10 +756,29 @@
         }
 
         function handleColor() {
-            if (selectedBlock) {
-                const color = neonColors[Math.floor(Math.random() * neonColors.length)];
+            if (selectedBlock && !selectedBlock.userData.isLocked) {
+                const currentColorHex = selectedBlock.material.color.getHex();
+                let idx = neonColors.indexOf(currentColorHex);
+                if (idx === -1) idx = 0;
+                idx = (idx + 1) % neonColors.length;
+                
+                const color = neonColors[idx];
                 selectedBlock.material.color.setHex(color);
                 selectedBlock.material.emissive.setHex(color);
+                
+                if (activeBlueprint) {
+                    if (typeof checkBlueprintSnap === 'function') {
+                        checkBlueprintSnap(selectedBlock);
+                        if (selectedBlock && selectedBlock.userData.isLocked) {
+                            if (typeof isDragging !== 'undefined') isDragging = false;
+                            if (typeof controls !== 'undefined') controls.enabled = true;
+                            selectedBlock = null;
+                        }
+                    }
+                } else {
+                    playSound('snap');
+                    emitSparkles(selectedBlock.position, color);
+                }
             }
         }
 
@@ -961,11 +1057,13 @@
             let closestBlock = null;
             let closestDist = 0.15;
             blocks.forEach(b => {
+                if (b.userData.isLocked) return;
                 const dist = b.position.distanceTo(checkPos);
                 if (dist < closestDist) { closestDist = dist; closestBlock = b; }
             });
 
-            const targetBlock = hits.length > 0 ? hits[0].object : closestBlock;
+            const rawTarget = hits.length > 0 ? hits[0].object : closestBlock;
+            const targetBlock = (rawTarget && !rawTarget.userData.isLocked) ? rawTarget : null;
 
             if(targetBlock) {
                 data.grabObj = targetBlock;
@@ -1037,6 +1135,22 @@
                 joined = true;
             }
             
+            if (activeBlueprint && typeof ghostBlocks !== 'undefined') {
+                for(let i=0; i<ghostBlocks.length; i++) {
+                    const gb = ghostBlocks[i];
+                    if(gb.filled) continue;
+                    if (Math.abs(obj.scale.x - gb.data.s) > gb.data.s * 0.25) continue;
+                    if (obj.material.color.getHex() !== gb.data.c) continue;
+                    const dx = Math.abs(newX - gb.mesh.position.x);
+                    const dz = Math.abs(newZ - gb.mesh.position.z);
+                    const dy = Math.abs(obj.position.y - gb.mesh.position.y);
+                    if (dx < 0.15 && dz < 0.15 && dy < 0.25) {
+                        targetY = gb.mesh.position.y;
+                        break;
+                    }
+                }
+            }
+            
             obj.position.set(newX, targetY, newZ);
             
             const e = new THREE.Euler().setFromQuaternion(obj.quaternion);
@@ -1045,12 +1159,15 @@
             e.z = Math.round(e.z / (Math.PI/2)) * (Math.PI/2);
             obj.quaternion.setFromEuler(e);
             
-            if (joined) {
-                playSound('stack', true);
-                emitSparkles(obj.position, obj.material.color.getHex());
-            } else {
-                playSound('place', true);
+            if (!activeBlueprint) {
+                if (joined) {
+                    playSound('stack', true);
+                    emitSparkles(obj.position, obj.material.color.getHex());
+                } else {
+                    playSound('place', true);
+                }
             }
+            if (typeof checkBlueprintSnap === 'function') checkBlueprintSnap(obj);
             data.grabObj = null;
         }
 
@@ -1106,6 +1223,7 @@
         });
 
         let curX = window.innerWidth/2, curY = window.innerHeight/2;
+        let pTargetX = window.innerWidth/2, pTargetY = window.innerHeight/2;
         let isPinching = false;
         let isFisting = false;
         let startFistY = 0;
@@ -1117,8 +1235,6 @@
             if (video.currentTime !== lastVTime) {
                 lastVTime = video.currentTime;
                 const res = handLandmarker.detectForVideo(video, performance.now());
-                
-                let targetX = curX, targetY = curY;
                 
                 if (res.landmarks && res.landmarks.length > 0) {
                     let h0 = res.landmarks[0];
@@ -1134,15 +1250,25 @@
                         if (dTip < dMcp * 1.25) closedFingers++;
                     });
                     
-                    let isHandFist = closedFingers >= 3;
-                    let isHandPinching = !isHandFist && (relDist < 0.20);
+                    let fistingNow = isFisting;
+                    if (!isFisting && closedFingers >= 3) fistingNow = true;
+                    if (isFisting && closedFingers < 2) fistingNow = false;
                     
-                    targetX = (1 - h0[9].x) * window.innerWidth;
-                    targetY = h0[9].y * window.innerHeight;
+                    let pinchingNow = isPinching;
+                    if (!isPinching && relDist < 0.20) pinchingNow = true;
+                    if (isPinching && relDist > 0.35) pinchingNow = false;
+                    
+                    let isHandFist = fistingNow;
+                    let isHandPinching = pinchingNow;
+                    
+                    if (isPinching) isHandFist = false; // Prevent fisting while already pinching
+                    if (isFisting) isHandPinching = false; // Prevent pinching while already fisting
+                    
+                    pTargetX = (1 - h0[9].x) * window.innerWidth;
+                    pTargetY = h0[9].y * window.innerHeight;
                     
                     if (isHandPinching && !isPinching && !isFisting) {
                         isPinching = true;
-                        curX = targetX; curY = targetY; 
                         cursor.classList.add('pinching');
                         if (audioCtx.state === 'suspended') audioCtx.resume();
                         onPointerDown(curX, curY);
@@ -1153,19 +1279,19 @@
                     }
                     
                     if (isHandFist && !isFisting && !isPinching) {
-                        pointer.x = (targetX / window.innerWidth) * 2 - 1;
-                        pointer.y = -(targetY / window.innerHeight) * 2 + 1;
+                        pointer.x = (curX / window.innerWidth) * 2 - 1;
+                        pointer.y = -(curY / window.innerHeight) * 2 + 1;
                         raycaster.setFromCamera(pointer, camera);
                         const intersects = raycaster.intersectObjects(blocks, false);
-                        if (intersects.length > 0) {
+                        if (intersects.length > 0 && !intersects[0].object.userData.isLocked) {
                             isFisting = true;
                             selectedBlock = intersects[0].object;
-                            startFistY = targetY;
+                            startFistY = curY;
                             startObjScale = selectedBlock.scale.x;
                             cursor.classList.add('fisting');
                         }
                     } else if (isHandFist && isFisting && selectedBlock) {
-                        let diffY = startFistY - targetY;
+                        let diffY = startFistY - curY;
                         let newScale = Math.max(0.5, Math.min(3.0, startObjScale + (diffY / window.innerHeight) * 3.0));
                         if (Math.abs(selectedBlock.scale.x - newScale) > 0.05) {
                             selectedBlock.scale.setScalar(newScale);
@@ -1174,6 +1300,9 @@
                     } else if (!isHandFist && isFisting) {
                         isFisting = false;
                         cursor.classList.remove('fisting');
+                        if (selectedBlock && activeBlueprint && typeof checkBlueprintSnap === 'function') {
+                            checkBlueprintSnap(selectedBlock);
+                        }
                     }
                 } else {
                     if (isPinching) {
@@ -1184,19 +1313,293 @@
                     if (isFisting) {
                         isFisting = false;
                         cursor.classList.remove('fisting');
+                        if (selectedBlock && activeBlueprint && typeof checkBlueprintSnap === 'function') {
+                            checkBlueprintSnap(selectedBlock);
+                        }
                     }
                 }
-                
-                curX += (targetX - curX) * 0.3;
-                curY += (targetY - curY) * 0.3;
-                cursor.style.left = curX + 'px';
-                cursor.style.top = curY + 'px';
+            }
+            
+            curX += (pTargetX - curX) * 0.3;
+            curY += (pTargetY - curY) * 0.3;
+            cursor.style.left = curX + 'px';
+            cursor.style.top = curY + 'px';
 
-                if (!isFisting) {
-                    onPointerMove(curX, curY);
+            if (!isFisting) {
+                onPointerMove(curX, curY);
+            }
+        }
+
+        // --- BLUEPRINT SYSTEM ---
+        const BLUEPRINTS = [
+            {
+                id: "fox", name: "Neon Fox", category: "Animals",
+                blocks: [
+                    // Core body
+                    {gx: 0, gy: 1, gz: 0, s: 1, c: 0xffaa00}, {gx: 0, gy: 1, gz: 1, s: 1, c: 0xffaa00}, {gx: 0, gy: 1, gz: 2, s: 1, c: 0xffaa00},
+                    // Legs
+                    {gx: 0, gy: 0, gz: 0, s: 1, c: 0xffaa00}, {gx: 0, gy: 0, gz: 2, s: 1, c: 0xffaa00},
+                    // Tail
+                    {gx: 0, gy: 1, gz: 3, s: 1, c: 0xffaa00}, {gx: 0, gy: 2, gz: 3, s: 1, c: 0xffffff},
+                    // Neck & Head
+                    {gx: 0, gy: 2, gz: 0, s: 1, c: 0xffaa00},
+                    {gx: -1, gy: 3, gz: 0, s: 1, c: 0xffaa00}, {gx: 0, gy: 3, gz: 0, s: 1, c: 0xffaa00}, {gx: 1, gy: 3, gz: 0, s: 1, c: 0xffaa00},
+                    // Snout
+                    {gx: 0, gy: 3, gz: -1, s: 1, c: 0xffffff}
+                ]
+            },
+            {
+                id: "cyber_tower", name: "Cyber Tower", category: "Buildings",
+                blocks: [
+                    // Base Ring
+                    {gx: -1, gy: 0, gz: -1, s: 1, c: 0x00f2ff}, {gx: 0, gy: 0, gz: -1, s: 1, c: 0x00f2ff}, {gx: 1, gy: 0, gz: -1, s: 1, c: 0x00f2ff},
+                    {gx: -1, gy: 0, gz: 0, s: 1, c: 0x00f2ff}, {gx: 1, gy: 0, gz: 0, s: 1, c: 0x00f2ff},
+                    {gx: -1, gy: 0, gz: 1, s: 1, c: 0x00f2ff}, {gx: 0, gy: 0, gz: 1, s: 1, c: 0x00f2ff}, {gx: 1, gy: 0, gz: 1, s: 1, c: 0x00f2ff},
+                    // Pillars
+                    {gx: -1, gy: 1, gz: -1, s: 1, c: 0x0055ff}, {gx: 1, gy: 1, gz: -1, s: 1, c: 0x0055ff}, {gx: -1, gy: 1, gz: 1, s: 1, c: 0x0055ff}, {gx: 1, gy: 1, gz: 1, s: 1, c: 0x0055ff},
+                    {gx: -1, gy: 2, gz: -1, s: 1, c: 0x0055ff}, {gx: 1, gy: 2, gz: -1, s: 1, c: 0x0055ff}, {gx: -1, gy: 2, gz: 1, s: 1, c: 0x0055ff}, {gx: 1, gy: 2, gz: 1, s: 1, c: 0x0055ff},
+                    // Top Ring
+                    {gx: 0, gy: 3, gz: -1, s: 1, c: 0x00ffcc}, {gx: -1, gy: 3, gz: 0, s: 1, c: 0x00ffcc}, {gx: 1, gy: 3, gz: 0, s: 1, c: 0x00ffcc}, {gx: 0, gy: 3, gz: 1, s: 1, c: 0x00ffcc},
+                    // Spire
+                    {gx: 0, gy: 4, gz: 0, s: 1, c: 0xff00d4}, {gx: 0, gy: 5, gz: 0, s: 1, c: 0xff0055}
+                ]
+            },
+            {
+                id: "space_fighter", name: "StarFighter", category: "Space",
+                blocks: [
+                    // Fuselage
+                    {gx: 0, gy: 1, gz: 0, s: 1, c: 0xffffff}, {gx: 0, gy: 1, gz: -1, s: 1, c: 0xffffff}, {gx: 0, gy: 1, gz: 1, s: 1, c: 0xffffff}, {gx: 0, gy: 1, gz: -2, s: 1, c: 0xffffff},
+                    // Wings
+                    {gx: -1, gy: 1, gz: 0, s: 1, c: 0x00f2ff}, {gx: -2, gy: 1, gz: 0, s: 1, c: 0x00f2ff}, {gx: -2, gy: 1, gz: 1, s: 1, c: 0x00f2ff},
+                    {gx: 1, gy: 1, gz: 0, s: 1, c: 0x00f2ff}, {gx: 2, gy: 1, gz: 0, s: 1, c: 0x00f2ff}, {gx: 2, gy: 1, gz: 1, s: 1, c: 0x00f2ff},
+                    // Engines
+                    {gx: -1, gy: 1, gz: 1, s: 1, c: 0xff00d4}, {gx: 1, gy: 1, gz: 1, s: 1, c: 0xff00d4},
+                    // Top / Cockpit
+                    {gx: 0, gy: 2, gz: 0, s: 1, c: 0xff00d4}, {gx: 0, gy: 2, gz: 1, s: 1, c: 0xffffff}
+                ]
+            }
+        ];
+
+        let activeBlueprint = null;
+        let ghostBlocks = [];
+        let completedBlocksGroup = null;
+        let isWorldScaled = false;
+        const originalCameraPos = new THREE.Vector3();
+
+        function renderBlueprintMenu() {
+            const list = document.getElementById('bp-list');
+            list.innerHTML = '';
+            BLUEPRINTS.forEach(bp => {
+                const card = document.createElement('div');
+                card.className = 'bg-slate-800/80 border border-slate-600 rounded-xl p-4 hover:border-[#00f2ff] hover:shadow-[0_0_15px_rgba(0,242,255,0.2)] transition-all cursor-pointer flex flex-col items-center group';
+                card.innerHTML = `
+                    <div class="text-[#00f2ff] text-xs font-bold uppercase tracking-widest mb-1 opacity-60">${bp.category}</div>
+                    <div class="text-lg font-black tracking-wide text-white mb-2 group-hover:text-[#00f2ff] transition-colors">${bp.name}</div>
+                    <div class="text-xs text-slate-400 bg-slate-900/50 px-2 py-1 rounded w-full text-center">${bp.blocks.length} Blocks</div>
+                `;
+                card.onclick = () => {
+                    document.getElementById('blueprint-menu').style.opacity = '0';
+                    setTimeout(() => document.getElementById('blueprint-menu').classList.add('hidden'), 300);
+                    startBlueprint(bp);
+                };
+                list.appendChild(card);
+            });
+        }
+        renderBlueprintMenu();
+
+        let currentBpIndex = -1;
+        function handleNextBlueprint() {
+            currentBpIndex++;
+            if (currentBpIndex >= BLUEPRINTS.length) currentBpIndex = -1;
+            
+            if (currentBpIndex === -1) {
+                document.getElementById('btn-mode-sandbox').click();
+            } else {
+                startBlueprint(BLUEPRINTS[currentBpIndex]);
+            }
+        }
+
+        document.getElementById('btn-mode-blueprint').onclick = () => {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            document.getElementById('blueprint-menu').classList.remove('hidden');
+            setTimeout(() => document.getElementById('blueprint-menu').style.opacity = '1', 10);
+        };
+        document.getElementById('bp-close').onclick = () => {
+            document.getElementById('blueprint-menu').style.opacity = '0';
+            setTimeout(() => document.getElementById('blueprint-menu').classList.add('hidden'), 300);
+        };
+
+        document.getElementById('btn-mode-sandbox').onclick = () => {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            activeBlueprint = null;
+            document.getElementById('game-progress').style.opacity = '0';
+            setTimeout(() => document.getElementById('game-progress').classList.add('hidden'), 300);
+            document.getElementById('btn-mode-sandbox').className = "px-3 py-1 bg-[#00f2ff]/20 text-[#00f2ff] text-[10px] uppercase font-bold rounded border border-[#00f2ff] hover:bg-[#00f2ff]/40 transition-all cursor-pointer";
+            document.getElementById('btn-mode-blueprint').className = "px-3 py-1 bg-slate-800/50 text-slate-400 text-[10px] uppercase font-bold rounded border border-transparent hover:text-white transition-all cursor-pointer";
+            clearGhosts();
+            if(completedBlocksGroup) {
+                scene.remove(completedBlocksGroup);
+                completedBlocksGroup = null;
+            }
+            gridHelper.visible = true;
+        };
+
+        function clearGhosts() {
+            ghostBlocks.forEach(g => scene.remove(g.mesh));
+            ghostBlocks = [];
+        }
+
+        function startBlueprint(bp) {
+            activeBlueprint = bp;
+            document.getElementById('btn-mode-sandbox').className = "px-3 py-1 bg-slate-800/50 text-slate-400 text-[10px] uppercase font-bold rounded border border-transparent hover:text-white transition-all cursor-pointer";
+            document.getElementById('btn-mode-blueprint').className = "px-3 py-1 bg-[#00f2ff]/20 text-[#00f2ff] text-[10px] uppercase font-bold rounded border border-[#00f2ff] hover:bg-[#00f2ff]/40 transition-all cursor-pointer";
+            
+            document.getElementById('game-progress').classList.remove('hidden');
+            setTimeout(() => document.getElementById('game-progress').style.opacity = '1', 10);
+            document.getElementById('prog-name').innerText = bp.name;
+            document.getElementById('btn-scale-world').classList.add('hidden');
+            
+            blocks.forEach(b => scene.remove(b));
+            blocks.length = 0;
+            clearGhosts();
+            if(completedBlocksGroup) {
+                scene.remove(completedBlocksGroup);
+                completedBlocksGroup = null;
+            }
+            gridHelper.visible = true;
+            isWorldScaled = false;
+            scene.scale.set(1, 1, 1);
+            
+            bp.blocks.forEach(data => {
+                const mat = new THREE.MeshStandardMaterial({
+                    color: data.c, transparent: true, opacity: 0.25,
+                    wireframe: true, emissive: data.c, emissiveIntensity: 0.5
+                });
+                const mesh = new THREE.Mesh(boxGeo, mat);
+                const yPos = data.gy * BOX_SIZE + HALF * data.s;
+                mesh.position.set(data.gx * BOX_SIZE, yPos, data.gz * BOX_SIZE);
+                mesh.scale.setScalar(data.s);
+                scene.add(mesh);
+                
+                // Add inner glowing core to ghost
+                const coreGeo = new THREE.BoxGeometry(BOX_SIZE*0.4, BOX_SIZE*0.4, BOX_SIZE*0.4);
+                const coreMat = new THREE.MeshBasicMaterial({color: data.c, transparent: true, opacity: 0.6});
+                const core = new THREE.Mesh(coreGeo, coreMat);
+                mesh.add(core);
+
+                ghostBlocks.push({ data, mesh, filled: false, matchedBlock: null });
+            });
+            updateBlueprintProgress();
+        }
+
+        function checkBlueprintSnap(block) {
+            if (!activeBlueprint || block.userData.isLocked) return;
+            
+            for(let i=0; i<ghostBlocks.length; i++) {
+                const gb = ghostBlocks[i];
+                if(gb.filled) continue;
+                
+                // Check scale
+                if (Math.abs(block.scale.x - gb.data.s) > gb.data.s * 0.25) continue;
+                // Check color
+                if (block.material.color.getHex() !== gb.data.c) continue;
+                
+                const dist = block.position.distanceTo(gb.mesh.position);
+                if (dist < 0.25) {
+                    block.position.copy(gb.mesh.position);
+                    block.rotation.set(0, 0, 0);
+                    block.userData.isLocked = true;
+                    gb.filled = true;
+                    gb.matchedBlock = block;
+                    gb.mesh.visible = false;
+                    
+                    playSound('stack', true);
+                    emitSparkles(block.position, gb.data.c);
+                    
+                    updateBlueprintProgress();
+                    return;
                 }
             }
         }
+
+        function updateBlueprintProgress() {
+            if (!activeBlueprint) return;
+            const total = ghostBlocks.length;
+            const filled = ghostBlocks.filter(g => g.filled).length;
+            const pct = Math.floor((filled / total) * 100);
+            
+            document.getElementById('prog-pct').innerText = pct + '%';
+            document.getElementById('prog-bar').style.width = pct + '%';
+            
+            if (filled === total) {
+                setTimeout(triggerCompletionEvent, 500);
+            }
+        }
+
+        function triggerCompletionEvent() {
+            playSound('spawn', true);
+            setTimeout(() => playSound('scatter', true), 200);
+            
+            const overlay = document.getElementById('completion-overlay');
+            overlay.classList.remove('hidden');
+            setTimeout(() => overlay.style.opacity = '1', 10);
+            
+            // Dramatic lighting
+            dirLight.intensity = 5;
+            ambientLight.intensity = 0.5;
+            setTimeout(() => {
+                dirLight.intensity = 2;
+                ambientLight.intensity = 1.5;
+            }, 2000);
+            
+            // Group the blocks to animate them together
+            completedBlocksGroup = new THREE.Group();
+            scene.add(completedBlocksGroup);
+            
+            ghostBlocks.forEach(g => {
+                const b = g.matchedBlock;
+                if (b) {
+                    scene.remove(b);
+                    completedBlocksGroup.add(b);
+                    // Emit lots of sparkles
+                    for(let i=0; i<3; i++) emitSparkles(b.position, b.material.color.getHex());
+                }
+            });
+            
+            blocks.forEach(b => {
+                if(!b.userData.isLocked) {
+                    scene.remove(b);
+                }
+            });
+            blocks.length = 0;
+            ghostBlocks.forEach(g => scene.remove(g.mesh));
+            ghostBlocks = [];
+            
+            gridHelper.visible = false; // hide grid for cinematic effect
+            
+            // Show scale toggle button
+            document.getElementById('btn-scale-world').classList.remove('hidden');
+            
+            setTimeout(() => {
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.classList.add('hidden'), 1000);
+            }, 3000);
+        }
+
+        function handleScaleWorld() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            isWorldScaled = !isWorldScaled;
+            if (isWorldScaled) {
+                scene.scale.set(5, 5, 5);
+                scene.position.y = -1;
+            } else {
+                scene.scale.set(1, 1, 1);
+                scene.position.y = 0;
+            }
+            playSound('spawn');
+        }
+
+        document.getElementById('btn-scale-world').onclick = handleScaleWorld;
 
         // --- LOOP ---
         renderer.setAnimationLoop(() => {
@@ -1204,11 +1607,24 @@
             processHands();
             const t = performance.now() * 0.001;
             
+            if (completedBlocksGroup) {
+                completedBlocksGroup.position.y = Math.sin(t * 2) * 0.1 + (isWorldScaled ? 1.0 : 0);
+                completedBlocksGroup.rotation.y = t * 0.2;
+                
+                // Pulse core emission
+                const pulse = 0.5 + 0.3 * Math.sin(t * 4);
+                completedBlocksGroup.children.forEach(c => {
+                    if (c.material && c.material.emissiveIntensity !== undefined) {
+                        c.material.emissiveIntensity = pulse;
+                    }
+                });
+            }
+            
             if (isInVRTutorial) updateVRTutorial(t);
             
             const sortedBlocks = [...blocks].sort((a, b) => a.position.y - b.position.y);
             for (const b of sortedBlocks) {
-                if (b === selectedBlock || vrControllers.some(c => c.grabObj === b) || b.userData.isPhysics) continue;
+                if (b === selectedBlock || vrControllers.some(c => c.grabObj === b) || b.userData.isPhysics || b.userData.isLocked) continue;
                 
                 let targetY = HALF * b.scale.y;
                 let maxObstacleY = -Infinity;
@@ -1285,6 +1701,8 @@
                                             if (action === 'delete') handleDelete();
                                             if (action === 'color') handleColor();
                                             if (action === 'grid') handleGrid();
+                                            if (action === 'next_blueprint') handleNextBlueprint();
+                                            if (action === 'scale_world') handleScaleWorld();
                                             if (action === 'exit_vr') renderer.xr.getSession().end();
                                             playSound('snap');
                                         }

@@ -465,16 +465,19 @@
             vrUIGroup.add(mesh);
             uiButtons.push(mesh);
         }
-        create3DButton('SPAWN', -0.12, 0.08, 'spawn');
-        create3DButton('REMOVE', 0.12, 0.08, 'delete');
-        create3DButton('COLOR', -0.12, 0.01, 'color');
-        create3DButton('GRID', 0.12, 0.01, 'grid');
-        create3DButton('BLUEPRINT', -0.12, -0.06, 'next_blueprint');
+        create3DButton('SPAWN', -0.12, 0.15, 'spawn');
+        create3DButton('REMOVE', 0.12, 0.15, 'delete');
+        create3DButton('COLOR', -0.12, 0.08, 'color');
+        create3DButton('GRID', 0.12, 0.08, 'grid');
+        create3DButton('BP: FOX', -0.12, 0.01, 'bp_fox');
+        create3DButton('BP: TOWER', 0.12, 0.01, 'bp_tower');
+        create3DButton('BP: FIGHTER', -0.12, -0.06, 'bp_fighter');
         create3DButton('SCALE', 0.12, -0.06, 'scale_world');
-        create3DButton('EXIT VR', 0, -0.13, 'exit_vr');
+        create3DButton('SANDBOX', -0.12, -0.13, 'sandbox');
+        create3DButton('EXIT VR', 0.12, -0.13, 'exit_vr');
 
         const uiBgMat = new THREE.MeshBasicMaterial({ color: 0x1e293b, transparent: true, opacity: 0.8, side: THREE.DoubleSide });
-        const uiBg = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.35), uiBgMat);
+        const uiBg = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.45), uiBgMat);
         uiBg.position.set(0, 0.01, -0.01);
         vrUIGroup.add(uiBg);
 
@@ -1025,6 +1028,11 @@
                     if (action === 'delete') handleDelete();
                     if (action === 'color') handleColor();
                     if (action === 'grid') handleGrid();
+                    if (action === 'scale_world') handleScaleWorld();
+                    if (action === 'bp_fox') startBlueprint(BLUEPRINTS.find(b => b.id === 'fox'));
+                    if (action === 'bp_tower') startBlueprint(BLUEPRINTS.find(b => b.id === 'cyber_tower'));
+                    if (action === 'bp_fighter') startBlueprint(BLUEPRINTS.find(b => b.id === 'space_fighter'));
+                    if (action === 'sandbox') document.getElementById('btn-mode-sandbox').click();
                     if (action === 'exit_vr') renderer.xr.getSession().end();
                     playSound('snap');
                     return;
@@ -1047,6 +1055,11 @@
                     if (action === 'delete') handleDelete();
                     if (action === 'color') handleColor();
                     if (action === 'grid') handleGrid();
+                    if (action === 'scale_world') handleScaleWorld();
+                    if (action === 'bp_fox') startBlueprint(BLUEPRINTS.find(b => b.id === 'fox'));
+                    if (action === 'bp_tower') startBlueprint(BLUEPRINTS.find(b => b.id === 'cyber_tower'));
+                    if (action === 'bp_fighter') startBlueprint(BLUEPRINTS.find(b => b.id === 'space_fighter'));
+                    if (action === 'sandbox') document.getElementById('btn-mode-sandbox').click();
                     if (action === 'exit_vr') renderer.xr.getSession().end();
                     playSound('snap');
                     return;
@@ -1701,8 +1714,11 @@
                                             if (action === 'delete') handleDelete();
                                             if (action === 'color') handleColor();
                                             if (action === 'grid') handleGrid();
-                                            if (action === 'next_blueprint') handleNextBlueprint();
                                             if (action === 'scale_world') handleScaleWorld();
+                                            if (action === 'bp_fox') startBlueprint(BLUEPRINTS.find(b => b.id === 'fox'));
+                                            if (action === 'bp_tower') startBlueprint(BLUEPRINTS.find(b => b.id === 'cyber_tower'));
+                                            if (action === 'bp_fighter') startBlueprint(BLUEPRINTS.find(b => b.id === 'space_fighter'));
+                                            if (action === 'sandbox') document.getElementById('btn-mode-sandbox').click();
                                             if (action === 'exit_vr') renderer.xr.getSession().end();
                                             playSound('snap');
                                         }
@@ -1710,19 +1726,6 @@
                                 });
                             }
 
-                            if (data.lastTipPos) {
-                                const dist = tipWorldPos.distanceTo(data.lastTipPos);
-                                const now = performance.now();
-                                const deltaTime = now - (data.lastTipTime || now);
-                                const velocity = deltaTime > 0 ? dist / deltaTime : 0;
-
-                                if (velocity > 0.002 && dist > 0.01 && dist < 0.15) {
-                                    if (now - (data.lastScatterTime || 0) > 1000) {
-                                        data.lastScatterTime = now;
-                                        triggerScatter();
-                                    }
-                                }
-                            }
                             data.lastTipPos = tipWorldPos.clone();
                             data.lastTipTime = performance.now();
                         }
